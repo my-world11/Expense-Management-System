@@ -1,5 +1,4 @@
 <?php
-include('config.php');
 include('header.php');
 if(isset($_POST['login'])){
 
@@ -14,7 +13,7 @@ if(isset($_POST['login'])){
         $_SESSION['UID']=$row['id'];
         $_SESSION['UNAME']=$row['username'];
          redirect('dashboard.php');
-         //hello
+         
 
    }else{
     echo "Plese enter valid login deatils";
