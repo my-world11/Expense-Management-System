@@ -8,7 +8,7 @@ if(isset($_GET['type']) && $_GET['type']=='delete' && isset($_GET['id']) && $_GE
    mysqli_query($con,"delete from expense where id=$id");
    echo "<br>Data is Deleted<br>";
 }
-  $res=mysqli_query($con,"select * from expense order by id desc");
+  $res=mysqli_query($con,"select expense.*,category.name  from expense, category where expense.category_id=category.id order by expense.id desc");
 ?>
 <h2>Expense</h2>
 <a href="manage_expense.php">Add Expense</a>
@@ -24,13 +24,13 @@ if(mysqli_num_rows($res)>0){
     <td>Item</td>
     <td>Price</td>
     <td>Details</td>
-    <td>Date</td>
+    <td>Expense Date</td>
     </tr>
 <?php while($row=mysqli_fetch_assoc($res)){
     ?>
     <tr>
     <td><?php echo $row['id']; ?></td>
-    <td><?php echo $row['category_id']; ?></td>
+    <td><?php echo $row['name']; ?></td>
     <td><?php echo $row['item']; ?></td>
     <td><?php echo $row['price']; ?></td>
     <td><?php echo $row['details']; ?></td>

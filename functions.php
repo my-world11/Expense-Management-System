@@ -28,4 +28,29 @@ function prx($data){
 }
    
  }
+
+ function getCategory($category_id){
+   global $con;
+   $res=mysqli_query($con,"select * from category order by name asc");
+
+   $html='<select required name="category_id">';
+   $html.='<option value ="">Select Category </option>';
+   
+   while ($row=mysqli_fetch_assoc($res)){
+
+      if($category_id>0 && $category_id==$row['id']){
+         $html.='<option value ="'.$row['id'].'"selected>'.$row['name'].'</option>';
+
+      }else{
+          $html.='<option value ="'.$row['id'].'">'.$row['name'].'</option>';
+      }
+       
+    
+   }
+   
+
+
+   $html.='</select>';
+   return $html;
+ }
 ?>

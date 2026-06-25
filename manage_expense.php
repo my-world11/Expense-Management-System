@@ -6,7 +6,7 @@ $category_id="";
 $item="";
 $price="";
 $details="";
-$added_on="";
+$expense_date="";
 $label="Add";
 if(isset($_GET['id']) && $_GET['id']>0){
     $label="Edit";
@@ -18,14 +18,15 @@ if(isset($_GET['id']) && $_GET['id']>0){
      $item=$row['item'];
      $price=$row['price'];
      $details=$row['details'];
-     $added_on=$row['added_on'];
+     $expense_date=$row['expense_date'];
 }
 if(isset($_POST['submit'])){
      $category_id=get_safe_value ($_POST['category_id']);
      $item=get_safe_value ($_POST['item']);
      $price=get_safe_value ($_POST['price']);
      $details=get_safe_value ($_POST['details']);
-     $added_on=get_safe_value ($_POST['added_on']);
+     $expense_date=get_safe_value ($_POST['expense_date']);
+     $added_on=date('Y-m-d h:m:s');
 
     $type="add";
     $sub_sql="";
@@ -34,10 +35,10 @@ if(isset($_POST['submit'])){
        $sub_sql="and id!=$id";
     }
 
-    $sql="insert into expense(category_id,item,price,details,added_on) values('$category_id','$item','$price','$details','$added_on')";
+    $sql="insert into expense(category_id,item,price,details,added_on,expense_date) values('$category_id','$item','$price','$details','$added_on','expense_date')";
          if(isset($_GET['id']) && $_GET['id']>0){
     
-       $sql="update expense set category_id='$category_id',item='$item',price='$price',details='$details',added_on='$added_on' where id=$id";
+       $sql="update expense set category_id='$category_id',item='$item',price='$price',details='$details',added_on='$expense_date' where id=$id";
          }
      mysqli_query($con,$sql); 
      redirect('expense.php');
@@ -55,7 +56,10 @@ include('user_header.php');
     <table>
         <tr>
             <td>Category</td>
-            <td><input type="text" name="name" required value="<?php echo $category ?>"></td>
+            <td>
+                <?php echo getCategory($category_id);
+                ?>
+            </td>
         </tr>
          <tr>
             <td>item</td>
@@ -63,11 +67,15 @@ include('user_header.php');
         </tr>
          <tr>
             <td>Price</td>
-            <td><input type="text" name="Price" required value="<?php echo $price ?>"></td>
+            <td><input type="text" name="price" required value="<?php echo $price ?>"></td>
         </tr>
          <tr>
             <td>Details</td>
             <td><input type="text" name="details" required value="<?php echo $details ?>"></td>
+        </tr>
+        <tr>
+            <td>Expense Date</td>
+            <td><input type="date" name="expense_date" required value="<?php echo $expense_date ?>"></td>
         </tr>
         <tr>
             <td></td>
