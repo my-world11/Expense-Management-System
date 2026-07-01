@@ -33,12 +33,13 @@ function prx($data){
    global $con;
    $res=mysqli_query($con,"select * from category order by name asc");
    
-   $fun="";
+   $fun="required";
    if($page=='reports'){
-      $fun="onchange=change_cat()";
+     //$fun="onchange=change_cat()";
+     $fun="";
    }
 
-   $html='<select required name="category_id" id="category_id" '.$fun.'>';
+   $html='<select $fun name="category_id" id="category_id">';
    $html.='<option value ="">Select Category </option>';
    
    while ($row=mysqli_fetch_assoc($res)){
