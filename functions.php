@@ -49,14 +49,42 @@ function prx($data){
 
       }else{
           $html.='<option value ="'.$row['id'].'">'.$row['name'].'</option>';
-      }
-       
-    
+      }  
    }
    
-
-
    $html.='</select>';
    return $html;
+ }
+
+function getDashboardExpense($type){
+   global $con;
+   $today=date('Y-m-d');
+   if($type=='today'){
+      $sub_sql="where expense_date=' $today' ";
+   }
+   else if($type=='yesterday'){
+      $yesterday=date('Y-m-d',strtotime('yesterday'));
+      $sub_sql="where expense_date=' $yesterday' ";
+   }
+   
+   else if($type=='week' || $type=='month' || $type=='year'){
+      $from=date('Y-m-d',strtotime("-1 $type"));
+      $sub_sql="where expense_date between '$from' and '$today' ";
+   }else{
+      $sub_sql="";
+   }
+
+   
+   $res=mysqli_query($con,"select sum(price) as price from expense $sub_sql ");
+   $row=mysqli_fetch_assoc($res);
+   $p=0;
+   $link="";
+   if($row['price']>0){
+      $p=$row['price'];
+      $link="&nbsp &nbsp &nbsp; <a href='dashboard_report.php'>Details</a>";
+
+   }
+
+   return $p.$link;
  }
 ?>

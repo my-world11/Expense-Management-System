@@ -6,7 +6,7 @@ $category_id="";
 $item="";
 $price="";
 $details="";
-$expense_date="";
+$expense_date=date('Y-m-d');
 $label="Add";
 if(isset($_GET['id']) && $_GET['id']>0){
     $label="Edit";

@@ -36,8 +36,8 @@ where expense.category_id = category.id $sub_sql group by expense.category_id");
    ?>
    <br><br>
     <input type="submit" name="submit" value="Submit">
+    <a href="reports.php">Reset</a>
 </form>
-<a href="reports.php">Reset</a>
 <?php
 if(mysqli_num_rows($res)>0){
     ?>
