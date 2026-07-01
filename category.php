@@ -17,7 +17,7 @@ if(isset($_GET['type']) && $_GET['type']=='delete' && isset($_GET['id']) && $_GE
 if(mysqli_num_rows($res)>0){
 ?>
 
-<table>
+<table border="1">
     <tr>
     <td>ID</td>
     <td>Name</td>

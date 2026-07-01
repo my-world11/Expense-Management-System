@@ -26,7 +26,7 @@ if(isset($_POST['submit'])){
      $price=get_safe_value ($_POST['price']);
      $details=get_safe_value ($_POST['details']);
      $expense_date=get_safe_value ($_POST['expense_date']);
-     $added_on=date('Y-m-d h:m:s');
+     $added_on=date('Y-m-d h:i:s');
 
     $type="add";
     $sub_sql="";
@@ -38,7 +38,7 @@ if(isset($_POST['submit'])){
     $sql="insert into expense(category_id,item,price,details,added_on,expense_date) values('$category_id','$item','$price','$details','$added_on','expense_date')";
          if(isset($_GET['id']) && $_GET['id']>0){
     
-       $sql="update expense set category_id='$category_id',item='$item',price='$price',details='$details',added_on='$expense_date' where id=$id";
+       $sql="update expense set category_id='$category_id',item='$item',price='$price',details='$details',expense_date='$expense_date' where id=$id";
          }
      mysqli_query($con,$sql); 
      redirect('expense.php');

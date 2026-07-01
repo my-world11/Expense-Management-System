@@ -8,7 +8,7 @@ if(isset($_GET['type']) && $_GET['type']=='delete' && isset($_GET['id']) && $_GE
    mysqli_query($con,"delete from expense where id=$id");
    echo "<br>Data is Deleted<br>";
 }
-  $res=mysqli_query($con,"select expense.*,category.name  from expense, category where expense.category_id=category.id order by expense.id desc");
+  $res=mysqli_query($con,"select expense.*,category.name  from expense, category where expense.category_id=category.id order by expense.expense_date asc");
 ?>
 <h2>Expense</h2>
 <a href="manage_expense.php">Add Expense</a>
@@ -17,7 +17,7 @@ if(isset($_GET['type']) && $_GET['type']=='delete' && isset($_GET['id']) && $_GE
 if(mysqli_num_rows($res)>0){
 ?>
 
-<table>
+<table border="1">
     <tr>
     <td>ID</td>
     <td>Category</td>
@@ -34,7 +34,7 @@ if(mysqli_num_rows($res)>0){
     <td><?php echo $row['item']; ?></td>
     <td><?php echo $row['price']; ?></td>
     <td><?php echo $row['details']; ?></td>
-    <td><?php echo $row['added_on']; ?></td>
+    <td><?php echo $row['expense_date']; ?></td>
     <td>
         <a href="manage_expense.php?id=<?php echo $row['id']; ?>">Edit</a>&nbsp;
         <a href="?type=delete&id=<?php echo $row['id']; ?>">Delete</a>
