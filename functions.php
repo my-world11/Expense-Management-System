@@ -29,11 +29,16 @@ function prx($data){
    
  }
 
- function getCategory($category_id){
+ function getCategory($category_id='',$page=''){
    global $con;
    $res=mysqli_query($con,"select * from category order by name asc");
+   
+   $fun="";
+   if($page=='reports'){
+      $fun="onchange=change_cat()";
+   }
 
-   $html='<select required name="category_id">';
+   $html='<select required name="category_id" id="category_id" '.$fun.'>';
    $html.='<option value ="">Select Category </option>';
    
    while ($row=mysqli_fetch_assoc($res)){

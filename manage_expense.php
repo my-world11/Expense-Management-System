@@ -85,6 +85,7 @@ include('user_header.php');
 </form>
 
 <?php echo $msg; ?>
+
 <?php
 include('footer.php');
 ?>

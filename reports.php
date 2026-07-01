@@ -3,16 +3,31 @@ include('header.php');
 checkUser();
 include('user_header.php');
 
+$cat_id='';
+$sub_sql='';
+if(isset($_GET['cat_id']) && $_GET['cat_id']>0){
+$cat_id= get_safe_value ($_GET['cat_id']);
+$sub_sql=" and category.id=$cat_id";
+}
+
 $res = mysqli_query($con,"select sum(expense.price) as price, category.name from expense, category
-where expense.category_id = category.id group by expense.category_id");
+where expense.category_id = category.id $sub_sql group by expense.category_id");
 ?>
 <h2>Reports</h2>
 
+<form type="get">
+   From <input type ="date" name="from">
+   &nbsp;  &nbsp;  &nbsp;
+    To <input type ="date" name="to">
+</form>
 
+<?php echo getCategory($cat_id,'reports'); 
+?>
+<br><br>
 <table border="1">
     <tr>
-    <td>Category</td>
-    <td>Price</td>
+    <th>Category</th>
+    <th>Price</th>
  </tr>
 
  <?php
@@ -26,8 +41,8 @@ where expense.category_id = category.id group by expense.category_id");
  </tr>
  <?php } ?>
   <tr>
-    <td>Total</td>
-    <td><?php echo $final_price ?></td>
+    <th>Total</th>
+    <th><?php echo $final_price ?></th>
  </tr>
 
 
