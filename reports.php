@@ -24,7 +24,7 @@ if($from!=='' && $to!=''){
     $sub_sql.=" and expense.expense_date between '$from' and '$to' ";
 }
 $res = mysqli_query($con,"select sum(expense.price) as price, category.name from expense, category
-where expense.category_id = category.id $sub_sql group by expense.category_id");
+where expense.category_id = category.id and expense.added_by='".$_SESSION['UID']."' $sub_sql group by expense.category_id");
 ?>
 
 <h2>Reports</h2>

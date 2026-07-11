@@ -12,8 +12,12 @@ if(isset($_POST['login'])){
         $row=mysqli_fetch_assoc($res);
         $_SESSION['UID']=$row['id'];
         $_SESSION['UNAME']=$row['username'];
+        $_SESSION['UROLE']=$row['role'];
+        if($_SESSION['UROLE']=='User'){
          redirect('dashboard.php');
-         
+        } else{
+            redirect('category.php');
+        }
 
    }else{
     echo "Plese enter valid login deatils";

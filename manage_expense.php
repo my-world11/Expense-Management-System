@@ -19,6 +19,11 @@ if(isset($_GET['id']) && $_GET['id']>0){
      $price=$row['price'];
      $details=$row['details'];
      $expense_date=$row['expense_date'];
+     if($row['added_by']!=$_SESSION['UID']){
+        redirect('expense.php');
+
+     }
+     
 }
 if(isset($_POST['submit'])){
      $category_id=get_safe_value ($_POST['category_id']);
@@ -35,7 +40,8 @@ if(isset($_POST['submit'])){
        $sub_sql="and id!=$id";
     }
 
-    $sql="insert into expense(category_id,item,price,details,added_on,expense_date) values('$category_id','$item','$price','$details','$added_on','expense_date')";
+    $added_by=$_SESSION['UID'];
+    $sql="insert into expense(category_id,item,price,details,added_on,expense_date,added_by) values('$category_id','$item','$price','$details','$added_on','$expense_date','$added_by')";
          if(isset($_GET['id']) && $_GET['id']>0){
     
        $sql="update expense set category_id='$category_id',item='$item',price='$price',details='$details',expense_date='$expense_date' where id=$id";

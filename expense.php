@@ -8,7 +8,7 @@ if(isset($_GET['type']) && $_GET['type']=='delete' && isset($_GET['id']) && $_GE
    mysqli_query($con,"delete from expense where id=$id");
    echo "<br>Data is Deleted<br>";
 }
-  $res=mysqli_query($con,"select expense.*,category.name  from expense, category where expense.category_id=category.id order by expense.expense_date asc");
+  $res=mysqli_query($con,"select expense.*,category.name  from expense, category where expense.category_id=category.id and expense.added_by='".$_SESSION['UID']."' order by expense.expense_date asc");
 ?>
 <h2>Expense</h2>
 <a href="manage_expense.php">Add Expense</a>

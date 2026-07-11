@@ -60,20 +60,20 @@ function getDashboardExpense($type){
    global $con;
    $today=date('Y-m-d');
    if($type=='today'){
-      $sub_sql="where expense_date='$today' ";
+      $sub_sql="and expense_date='$today' ";
       $from=$today;
       $to=$today;
    }
    else if($type=='yesterday'){
       $yesterday=date('Y-m-d',strtotime('yesterday'));
-      $sub_sql="where expense_date='$yesterday' ";
+      $sub_sql="and expense_date='$yesterday' ";
       $from=$yesterday;
       $to=$yesterday;
    }
    
    else if($type=='week' || $type=='month' || $type=='year'){
       $from=date('Y-m-d',strtotime("-1 $type"));
-      $sub_sql="where expense_date between '$from' and '$today' ";
+      $sub_sql="and expense_date between '$from' and '$today' ";
       $to=$today;
    }else{
       $sub_sql=" ";
@@ -82,7 +82,7 @@ function getDashboardExpense($type){
    }
 
    
-   $res=mysqli_query($con,"select sum(price) as price from expense $sub_sql ");
+   $res=mysqli_query($con,"select sum(price) as price from expense where added_by='".$_SESSION['UID']."'$sub_sql ");
    $row=mysqli_fetch_assoc($res);
    $p=0;
    $link="";

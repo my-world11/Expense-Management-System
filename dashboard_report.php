@@ -2,25 +2,31 @@
 include('header.php');
 checkUser();
 include('user_header.php');
+$from='';
+$to='';
+$sub_sql="";
 
+if(isset($_GET['from']) ){
 $from= get_safe_value ($_GET['from']);
-$to= get_safe_value ($_GET['to']);
+}
 
-$res=mysqli_query($con,"select
-expense.price,category.name,expense.item,expense.expense_date
-from expense,category
-where expense.category_id=category.id and
-expense.expense_date between '$from' and '$to'
-");
+if(isset($_GET['to']) ){
+    $to= get_safe_value ($_GET['to']);
+}
+
+if($from!=='' && $to!=''){
+    $sub_sql.=" and expense.expense_date between '$from' and '$to' ";
+}
+$res=mysqli_query($con,"select expense.price,category.name,expense.item,expense.expense_date 
+from expense,category where expense.category_id=category.id and expense.added_by='".$_SESSION['UID']."
+'$sub_sql ");
 ?>
-
 <h2>Dashboard Reports</h2>
 
-<form type="get">
+<?php if($from!='' && $to!=''){ ?>
  From <?php echo $from?>
  To <?php echo $to?>
-
-</form>
+<?php } ?>
 <?php
 if(mysqli_num_rows($res)>0){
     ?>
