@@ -12,7 +12,7 @@ $category_id= get_safe_value ($_GET['category_id']);
 $sub_sql=" and category.id=$category_id";
 
 }
-if(isset($_GET['category_id']) ){
+if(isset($_GET['from']) ){
 $from= get_safe_value ($_GET['from']);
 }
 

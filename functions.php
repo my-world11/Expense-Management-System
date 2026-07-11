@@ -39,7 +39,7 @@ function prx($data){
      $fun="";
    }
 
-   $html='<select $fun name="category_id" id="category_id">';
+$html='<select '.$fun.' name="category_id" id="category_id">';
    $html.='<option value ="">Select Category </option>';
    
    while ($row=mysqli_fetch_assoc($res)){
@@ -60,18 +60,25 @@ function getDashboardExpense($type){
    global $con;
    $today=date('Y-m-d');
    if($type=='today'){
-      $sub_sql="where expense_date=' $today' ";
+      $sub_sql="where expense_date='$today' ";
+      $from=$today;
+      $to=$today;
    }
    else if($type=='yesterday'){
       $yesterday=date('Y-m-d',strtotime('yesterday'));
-      $sub_sql="where expense_date=' $yesterday' ";
+      $sub_sql="where expense_date='$yesterday' ";
+      $from=$yesterday;
+      $to=$yesterday;
    }
    
    else if($type=='week' || $type=='month' || $type=='year'){
       $from=date('Y-m-d',strtotime("-1 $type"));
       $sub_sql="where expense_date between '$from' and '$today' ";
+      $to=$today;
    }else{
-      $sub_sql="";
+      $sub_sql=" ";
+      $from='';
+      $to='';
    }
 
    
@@ -81,7 +88,8 @@ function getDashboardExpense($type){
    $link="";
    if($row['price']>0){
       $p=$row['price'];
-      $link="&nbsp &nbsp &nbsp; <a href='dashboard_report.php'>Details</a>";
+      $link="&nbsp &nbsp &nbsp; 
+      <a href='dashboard_report.php?from=".$from."&to=".$to."'>Details</a>";
 
    }
 

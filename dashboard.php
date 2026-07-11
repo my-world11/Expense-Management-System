@@ -22,25 +22,25 @@ include('user_header.php');
     <tr>
         <td>This Week Expense</td>
         <td>
-            <?php echo getDashboardExpense(' week')?>
+            <?php echo getDashboardExpense('week')?>
         </td>
     </tr>
     <tr>
         <td>This Month Expense</td>
         <td>
-            <?php echo getDashboardExpense(' month')?>
+            <?php echo getDashboardExpense('month')?>
         </td>
     </tr>
     <tr>
         <td>This Year Expense</td>
         <td>
-            <?php echo getDashboardExpense(' year')?>
+            <?php echo getDashboardExpense('year')?>
         </td>
     </tr>
     <tr>
         <td>Total Expense</td>
         <td>
-            <?php echo getDashboardExpense(' total')?>
+            <?php echo getDashboardExpense('total')?>
         </td>
     </tr>
 </table>
