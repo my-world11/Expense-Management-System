@@ -16,5 +16,9 @@
         window.location.href=page+"?type=delete&id="+id;
       }
     }
+    function set_to_date(){
+      var from_date=document.getElementById('from_date').value;
+      document.getElementById('to_date').setAttribute("min",from_date);
+    }
    </script>
 </html>

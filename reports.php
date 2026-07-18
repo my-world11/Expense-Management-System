@@ -30,9 +30,10 @@ where expense.category_id = category.id and expense.added_by='".$_SESSION['UID']
 
 <h2>Reports</h2>
 <form type="get">
-   From <input type ="date" name="from" value="<?php echo $from?>">
+   From <input type ="date" name="from" value="<?php echo $from?>" max="<?php echo date('Y-m-d')?>" onchange="set_to_date()"id="from_date">
+
    &nbsp;  &nbsp;  &nbsp;
-    To <input type ="date" name="to" value="<?php echo $to?>">
+    To <input type ="date" name="to" value="<?php echo $to?>"max="<?php echo date('Y-m-d')?>" id="to_date" >
    <?php echo getCategory($category_id,'reports'); 
    ?>
    <br><br>
