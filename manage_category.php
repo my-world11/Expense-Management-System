@@ -1,6 +1,7 @@
 <?php
 include('header.php');
 checkUser();
+adminArea();
 $msg="";
 $category="";
 $label="Add";
@@ -8,6 +9,12 @@ if(isset($_GET['id']) && $_GET['id']>0){
     $label="Edit";
      $id=get_safe_value ($_GET['id']);
      $res=mysqli_query($con,"select * from category where id=$id");
+    
+       if(mysqli_num_rows($res)==0){
+         redirect('category.php');
+         die();
+        
+     }
      $row=mysqli_fetch_assoc($res);
      $category=$row['name'];
 

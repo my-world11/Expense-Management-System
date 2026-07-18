@@ -5,11 +5,14 @@ if(isset($_POST['login'])){
    $username=get_safe_value ($_POST['username']);
    $password=get_safe_value ($_POST['password']);
    
-   $res=mysqli_query($con,"select * from users where username='$username' and password='$password'");
+   $res=mysqli_query($con,"select * from users where username='$username' ");
    
    if(mysqli_num_rows($res)>0){
-          
-        $row=mysqli_fetch_assoc($res);
+         $row=mysqli_fetch_assoc($res);
+
+        $verify=password_verify($password,$row['password']);
+       
+        if($verify==1){
         $_SESSION['UID']=$row['id'];
         $_SESSION['UNAME']=$row['username'];
         $_SESSION['UROLE']=$row['role'];
@@ -18,9 +21,13 @@ if(isset($_POST['login'])){
         } else{
             redirect('category.php');
         }
+        }else{
+
+              echo "Plese enter valid password";
+        }
 
    }else{
-    echo "Plese enter valid login deatils";
+    echo "Plese enter valid username";
    }
 }
 ?>

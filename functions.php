@@ -90,9 +90,17 @@ function getDashboardExpense($type){
       $p=$row['price'];
       $link="&nbsp &nbsp &nbsp; 
       <a href='dashboard_report.php?from=".$from."&to=".$to."'>Details</a>";
-
-   }
-
+}
    return $p.$link;
+ }
+ function adminArea(){
+      if($_SESSION['UROLE']!='Admin'){
+         redirect('dashboard.php');
+      }
+ }
+      function userArea(){
+      if($_SESSION['UROLE']!='User'){
+         redirect('category.php');
+      }
  }
 ?>

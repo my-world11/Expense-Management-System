@@ -1,6 +1,7 @@
 <?php
 include('header.php');
 checkUser();
+userArea();
 include('user_header.php');
 ?>
 

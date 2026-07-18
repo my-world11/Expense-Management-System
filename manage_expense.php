@@ -1,6 +1,7 @@
 <?php
 include('header.php');
 checkUser();
+userArea();
 $msg="";
 $category_id="";
 $item="";
@@ -12,8 +13,14 @@ if(isset($_GET['id']) && $_GET['id']>0){
     $label="Edit";
      $id=get_safe_value ($_GET['id']);
      $res=mysqli_query($con,"select * from expense where id=$id");
-     $row=mysqli_fetch_assoc($res);
+    if(mysqli_num_rows($res)==0){
+         redirect('expense.php');
+         die();
+        
+     }
 
+     $row=mysqli_fetch_assoc($res);
+     
      $category_id=$row['category_id'];
      $item=$row['item'];
      $price=$row['price'];
