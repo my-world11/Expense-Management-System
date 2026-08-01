@@ -3,6 +3,7 @@ if($_SESSION['UROLE']=='User'){
 ?>
 <a href="dashboard.php">Dashboard</a>&nbsp;
 <a href="expense.php">Expense</a>&nbsp;
+<a href="income.php">Income</a>&nbsp;
 <a href="reports.php">Reports</a>&nbsp;
 <?php
 }else{

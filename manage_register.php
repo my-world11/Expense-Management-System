@@ -80,11 +80,11 @@ include('user_header.php');
         </tr>
          <tr>
             <td>Price</td>
-            <input type="number" name="price" min="0" step="0.01" required value="<?php echo $price ?>">
+            <td><input type="text" name="price" required value="<?php echo $price ?>"></td>
         </tr>
          <tr>
             <td>Details</td>
-            <textarea name="details" required><?php echo $details; ?></textarea>
+            <td><input type="text" name="details" required value="<?php echo $details ?>"></td>
         </tr>
         <tr>
             <td>Expense Date</td>

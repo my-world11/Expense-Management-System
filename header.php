@@ -6,48 +6,89 @@ include('functions.php');
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Expense Management System</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
 
-body{
-    background:#f4f6f9;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
     font-family:Arial, Helvetica, sans-serif;
 }
 
+body{
+    background:#f4f6f9;
+}
+
 .header{
+    width:100%;
     background:#0d6efd;
-    color:white;
-    padding:15px;
+    color:#fff;
+    padding:18px;
     text-align:center;
     font-size:28px;
     font-weight:bold;
-    box-shadow:0px 3px 10px rgba(0,0,0,.2);
+    box-shadow:0 2px 10px rgba(0,0,0,.2);
 }
 
-.card{
-    border:none;
-    border-radius:12px;
-    box-shadow:0px 0px 10px rgba(0,0,0,.1);
+.container{
+    width:100%;
+    padding:20px;
 }
 
-.table{
-    background:white;
+input[type=text],
+input[type=email],
+input[type=password],
+input[type=date],
+input[type=number],
+select,
+textarea{
+    width:100%;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:5px;
+    outline:none;
 }
 
-.footer{
+input[type=submit],
+button{
     background:#0d6efd;
     color:white;
-    text-align:center;
-    padding:12px;
-    margin-top:30px;
+    border:none;
+    padding:10px 20px;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+input[type=submit]:hover,
+button:hover{
+    background:#0b5ed7;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+table td,
+table th{
+    padding:10px;
+}
+
+a{
+    color:#0d6efd;
+    text-decoration:none;
+}
+
+a:hover{
+    text-decoration:underline;
 }
 
 </style>
@@ -57,8 +98,8 @@ body{
 <body>
 
 <div class="header">
-<i class="fa-solid fa-wallet"></i>
-Expense Management System
+    <i class="fa-solid fa-wallet"></i>
+    Expense Management System
 </div>
 
-<div class="container mt-4">
+<div class="container">

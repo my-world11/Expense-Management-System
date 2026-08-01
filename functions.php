@@ -103,4 +103,61 @@ function getDashboardExpense($type){
          redirect('category.php');
       }
  }
+ 
+
+ 
+
+function getDashboardIncome($type){
+   global $con;
+
+   $today=date('Y-m-d');
+
+   if($type=='today'){
+      $sub_sql="and income_date='$today' ";
+   }
+   else if($type=='yesterday'){
+      $yesterday=date('Y-m-d',strtotime('yesterday'));
+      $sub_sql="and income_date='$yesterday' ";
+   }
+   else if($type=='week' || $type=='month' || $type=='year'){
+      $from=date('Y-m-d',strtotime("-1 $type"));
+      $sub_sql="and income_date between '$from' and '$today' ";
+   }else{
+      $sub_sql="";
+   }
+
+   $res=mysqli_query($con,"select sum(amount) as amount from income where added_by='".$_SESSION['UID']."' $sub_sql");
+
+   $row=mysqli_fetch_assoc($res);
+
+   if($row['amount']==""){
+      return 0;
+   }else{
+      return $row['amount'];
+   }
+}
+
+function getSaving(){
+
+   global $con;
+
+   $income=0;
+   $expense=0;
+
+   $res=mysqli_query($con,"select sum(amount) as total_income from income where added_by='".$_SESSION['UID']."'");
+   $row=mysqli_fetch_assoc($res);
+
+   if($row['total_income']!=""){
+      $income=$row['total_income'];
+   }
+
+   $res=mysqli_query($con,"select sum(price) as total_expense from expense where added_by='".$_SESSION['UID']."'");
+   $row=mysqli_fetch_assoc($res);
+
+   if($row['total_expense']!=""){
+      $expense=$row['total_expense'];
+   }
+
+   return $income-$expense;
+}
 ?>
