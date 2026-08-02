@@ -168,8 +168,8 @@ required><?php echo $details; ?></textarea>
 type="date"
 name="income_date"
 required
-value="<?php echo $income_date; ?>"
-max="<?php echo date('Y-m-d'); ?>">
+max="<?php echo date('Y-m-d'); ?>"
+value="<?php echo $income_date; ?>">
 <input
 type="submit"
 name="submit"
