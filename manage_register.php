@@ -1,103 +1,454 @@
 <?php
 include('header.php');
 checkUser();
-userArea();
+adminArea();
+
 $msg="";
-$category_id="";
-$item="";
-$price="";
-$details="";
-$expense_date=date('Y-m-d');
+
+$username="";
+$email="";
+$password="";
+$role="User";
+$status="Active";
 $label="Add";
+
+
 if(isset($_GET['id']) && $_GET['id']>0){
+
     $label="Edit";
-     $id=get_safe_value ($_GET['id']);
-     $res=mysqli_query($con,"select * from expense where id=$id");
+
+    $id=get_safe_value($_GET['id']);
+
+    $res=mysqli_query($con,"select * from users where id='$id'");
+
     if(mysqli_num_rows($res)==0){
-         redirect('expense.php');
-         die();
-        
-     }
-
-     $row=mysqli_fetch_assoc($res);
-     
-     $category_id=$row['category_id'];
-     $item=$row['item'];
-     $price=$row['price'];
-     $details=$row['details'];
-     $expense_date=$row['expense_date'];
-     if($row['added_by']!=$_SESSION['UID']){
-        redirect('expense.php');
-
-     }
-     
-}
-if(isset($_POST['submit'])){
-     $category_id=get_safe_value ($_POST['category_id']);
-     $item=get_safe_value ($_POST['item']);
-     $price=get_safe_value ($_POST['price']);
-     $details=get_safe_value ($_POST['details']);
-     $expense_date=get_safe_value ($_POST['expense_date']);
-     $added_on=date('Y-m-d h:i:s');
-
-    $type="add";
-    $sub_sql="";
-    if(isset($_GET['id']) && $_GET['id']>0){
-       $type="edit";
-       $sub_sql="and id!=$id";
+        redirect('users.php');
+        die();
     }
 
-    $added_by=$_SESSION['UID'];
-    $sql="insert into expense(category_id,item,price,details,added_on,expense_date,added_by) values('$category_id','$item','$price','$details','$added_on','$expense_date','$added_by')";
-         if(isset($_GET['id']) && $_GET['id']>0){
-    
-       $sql="update expense set category_id='$category_id',item='$item',price='$price',details='$details',expense_date='$expense_date' where id=$id";
-         }
-     mysqli_query($con,$sql); 
-     redirect('expense.php');
+    $row=mysqli_fetch_assoc($res);
 
+    $username=$row['username'];
+    $email=$row['email'];
+    $role=$row['role'];
+    $status=$row['status'];
+}
+
+
+if(isset($_POST['submit'])){
+
+    $username=get_safe_value($_POST['username']);
+    $email=get_safe_value($_POST['email']);
+    $password=get_safe_value($_POST['password']);
+    $confirm_password=get_safe_value($_POST['confirm_password']);
+    $role=get_safe_value($_POST['role']);
+    $status=get_safe_value($_POST['status']);
+
+
+    if($label=="Add" && $password!=$confirm_password){
+
+        $msg="Password and Confirm Password do not match";
+
+    }else{
+
+        $sub_sql="";
+
+        if(isset($_GET['id']) && $_GET['id']>0){
+            $sub_sql=" and id!=$id";
+        }
+
+
+        $check=mysqli_query($con,
+            "select * from users
+             where username='$username' $sub_sql"
+        );
+
+        if(mysqli_num_rows($check)>0){
+
+            $msg="Username already exists";
+
+        }else{
+
+            $check=mysqli_query($con,
+                "select * from users
+                 where email='$email' $sub_sql"
+            );
+
+            if(mysqli_num_rows($check)>0){
+
+                $msg="Email already exists";
+
+            }else{
+
+
+                /* EDIT USER */
+
+                if(isset($_GET['id']) && $_GET['id']>0){
+
+                    if($password!=""){
+
+                        $password=password_hash(
+                            $password,
+                            PASSWORD_DEFAULT
+                        );
+
+                        mysqli_query($con,"update users set
+                            username='$username',
+                            email='$email',
+                            password='$password',
+                            role='$role',
+                            status='$status'
+                            where id='$id'
+                        ");
+
+                    }else{
+
+                        mysqli_query($con,"update users set
+                            username='$username',
+                            email='$email',
+                            role='$role',
+                            status='$status'
+                            where id='$id'
+                        ");
+                    }
+
+
+                }else{
+
+
+                    /* ADD USER */
+
+                    if($password==""){
+
+                        $msg="Password is required";
+
+                    }else{
+
+                        $password=password_hash(
+                            $password,
+                            PASSWORD_DEFAULT
+                        );
+
+                        mysqli_query($con,"insert into users
+                            (username,email,password,role,status,suspend_until)
+                            values
+                            ('$username','$email','$password',
+                             '$role','$status',NULL)
+                        ");
+
+                        redirect('users.php');
+                    }
+                }
+
+
+                if($msg==""){
+                    redirect('users.php');
+                }
+            }
+        }
+    }
 }
 
 
 include('user_header.php');
 ?>
-<h2><?php echo $label ?>  Expense</h2>
-<a href="expense.php">Back</a>
-<br><br>
+
+
+<style>
+
+.register-box{
+    width:500px;
+    max-width:95%;
+    margin:30px auto;
+    background:#fff;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+}
+
+.register-box h2{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.form-group{
+    margin-bottom:15px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:6px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.form-group input,
+.form-group select{
+    width:100%;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:7px;
+    box-sizing:border-box;
+    font-size:17px;
+}
+
+.btn{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#0d6efd;
+    color:white;
+    border:none;
+    border-radius:7px;
+    cursor:pointer;
+    font-size:17px;
+}
+
+.btn:hover{
+    background:#0b5ed7;
+}
+
+.back{
+    display:inline-block;
+    margin-bottom:20px;
+    text-decoration:none;
+}
+
+.error{
+    color:red;
+    text-align:center;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+.show-password{
+    font-weight:normal !important;
+    font-size:15px !important;
+}
+
+</style>
+
+
+<div class="register-box">
+
+
+<h2>
+    👤 <?php echo $label; ?> User
+</h2>
+
+
+<a class="back" href="users.php">
+    ← Back
+</a>
+
 
 <form method="post">
-    <table>
-        <tr>
-            <td>Category</td>
-            <td>
-                <?php echo getCategory($category_id);
-                ?>
-            </td>
-        </tr>
-         <tr>
-            <td>item</td>
-            <td><input type="text" name="item" required value="<?php echo $item ?>"></td>
-        </tr>
-         <tr>
-            <td>Price</td>
-            <td><input type="text" name="price" required value="<?php echo $price ?>"></td>
-        </tr>
-         <tr>
-            <td>Details</td>
-            <td><input type="text" name="details" required value="<?php echo $details ?>"></td>
-        </tr>
-        <tr>
-            <td>Expense Date</td>
-            <td><input type="date" name="expense_date" required value="<?php echo $expense_date ?>"></td>
-        </tr>
-        <tr>
-            <td></td>
-            <td><input type="submit" name="submit" value="Submit"></td>
-        </tr>
-    </table>
+
+
+<div class="form-group">
+
+<label>Username</label>
+
+<input
+    type="text"
+    name="username"
+    required
+    value="<?php echo $username; ?>"
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Gmail</label>
+
+<input
+    type="email"
+    name="email"
+    required
+    placeholder="example@gmail.com"
+    value="<?php echo $email; ?>"
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Password</label>
+
+<input
+    type="password"
+    name="password"
+    id="password"
+    <?php
+    if($label=="Add"){
+        echo "required";
+    }
+    ?>
+>
+
+</div>
+
+
+<?php if($label=="Add"){ ?>
+
+<div class="form-group">
+
+<label>Confirm Password</label>
+
+<input
+    type="password"
+    name="confirm_password"
+    id="confirm_password"
+    required
+>
+
+</div>
+
+<?php } ?>
+
+
+<div class="form-group">
+
+<label class="show-password">
+
+<input
+    type="checkbox"
+    onclick="showPassword()"
+>
+
+ Show Password
+
+</label>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Role</label>
+
+<select name="role">
+
+<option value="User"
+<?php
+if($role=="User"){
+    echo "selected";
+}
+?>
+>
+User
+</option>
+
+<option value="Admin"
+<?php
+if($role=="Admin"){
+    echo "selected";
+}
+?>
+>
+Admin
+</option>
+
+</select>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Status</label>
+
+<select name="status">
+
+<option value="Active"
+<?php
+if($status=="Active"){
+    echo "selected";
+}
+?>
+>
+Active
+</option>
+
+<option value="Suspended"
+<?php
+if($status=="Suspended"){
+    echo "selected";
+}
+?>
+>
+Suspended
+</option>
+
+</select>
+
+</div>
+
+
+<input
+    type="submit"
+    name="submit"
+    value="<?php echo $label; ?> User"
+    class="btn"
+>
+
+
 </form>
 
-<?php echo $msg; ?>
+
+<?php
+
+if($msg!=""){
+
+?>
+
+<div class="error">
+    <?php echo $msg; ?>
+</div>
+
+<?php
+
+}
+
+?>
+
+
+</div>
+
+
+<script>
+
+function showPassword(){
+
+    var password=document.getElementById("password");
+
+    var confirmPassword=document.getElementById("confirm_password");
+
+    if(password.type=="password"){
+
+        password.type="text";
+
+        if(confirmPassword){
+            confirmPassword.type="text";
+        }
+
+    }else{
+
+        password.type="password";
+
+        if(confirmPassword){
+            confirmPassword.type="password";
+        }
+
+    }
+
+}
+
+</script>
+
 
 <?php
 include('footer.php');

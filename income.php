@@ -5,34 +5,177 @@ userArea();
 include('user_header.php');
 
 if(isset($_GET['type']) && $_GET['type']=='delete' && isset($_GET['id']) && $_GET['id']>0){
-   $id=get_safe_value($_GET['id']);
-   mysqli_query($con,"delete from income where id=$id");
-   echo "<br>Data is Deleted<br>";
+
+    $id=get_safe_value($_GET['id']);
+
+    mysqli_query($con,"delete from income where id=$id");
+
+    echo "<br>Data is Deleted<br>";
 }
 
-$res=mysqli_query($con,"select * from income where added_by='".$_SESSION['UID']."' order by income_date asc");
+$res=mysqli_query($con,"select * from income where added_by='".$_SESSION['UID']."' order by income_date desc");
 ?>
 
-<h2>Income</h2>
+<style>
 
-<a href="manage_income.php">Add Income</a>
+.page-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:25px 0;
+}
 
-<br><br>
+.page-title h2{
+    font-size:32px;
+    color:#0d6efd;
+}
+
+.add-btn{
+    background:#0d6efd;
+    color:#fff;
+    padding:12px 25px;
+    border-radius:8px;
+    text-decoration:none;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.add-btn:hover{
+    background:#0b5ed7;
+    color:#fff;
+}
+
+.search-box{
+    display:flex;
+    gap:15px;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+}
+
+.search-box input{
+    height:50px;
+    padding:0 15px;
+    font-size:18px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    outline:none;
+    width:300px;
+}
+
+.table-box{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+    overflow:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+table th{
+    background:#0d6efd;
+    color:#fff;
+    padding:15px;
+    font-size:18px;
+    text-align:center;
+}
+
+table td{
+    padding:14px;
+    border-bottom:1px solid #ddd;
+    text-align:center;
+    font-size:17px;
+}
+
+table tr:hover{
+    background:#f5f9ff;
+}
+
+.edit-btn{
+    background:#198754;
+    color:#fff;
+    padding:8px 15px;
+    border-radius:6px;
+    text-decoration:none;
+    margin-right:5px;
+}
+
+.edit-btn:hover{
+    background:#157347;
+    color:#fff;
+}
+
+.delete-btn{
+    background:#dc3545;
+    color:#fff;
+    padding:8px 15px;
+    border-radius:6px;
+    text-decoration:none;
+}
+
+.delete-btn:hover{
+    background:#bb2d3b;
+    color:#fff;
+}
+
+.no-data{
+    text-align:center;
+    font-size:22px;
+    color:#666;
+    padding:40px;
+}
+
+</style>
+
+
+<div class="page-title">
+
+    <h2>
+        <i class="fa-solid fa-money-bill-wave"></i>
+        Income List
+    </h2>
+
+    <a href="manage_income.php" class="add-btn">
+        <i class="fa-solid fa-plus"></i>
+        Add Income
+    </a>
+
+</div>
+
+
+<div class="search-box">
+
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search Income..."
+    >
+
+</div>
+
 
 <?php
 if(mysqli_num_rows($res)>0){
 ?>
 
-<table border="1">
+<div class="table-box">
+
+<table>
 
 <tr>
-    <td>ID</td>
-    <td>Source</td>
-    <td>Amount</td>
-    <td>Details</td>
-    <td>Income Date</td>
-    <td>Action</td>
+
+    <th>ID</th>
+    <th>Source</th>
+    <th>Amount</th>
+    <th>Details</th>
+    <th>Income Date</th>
+    <th>Action</th>
+
 </tr>
+
 
 <?php
 while($row=mysqli_fetch_assoc($res)){
@@ -40,42 +183,108 @@ while($row=mysqli_fetch_assoc($res)){
 
 <tr>
 
-<td><?php echo $row['id']; ?></td>
+    <td>
+        <?php echo $row['id']; ?>
+    </td>
 
-<td><?php echo $row['source']; ?></td>
+    <td>
+        <?php echo $row['source']; ?>
+    </td>
 
-<td><?php echo $row['amount']; ?></td>
+    <td>
+        <b>
+            Rs. <?php echo number_format($row['amount'],2); ?>
+        </b>
+    </td>
 
-<td><?php echo $row['details']; ?></td>
+    <td>
+        <?php echo $row['details']; ?>
+    </td>
 
-<td><?php echo $row['income_date']; ?></td>
+    <td>
+        <?php echo $row['income_date']; ?>
+    </td>
 
-<td>
+    <td>
 
-<a href="manage_income.php?id=<?php echo $row['id']; ?>">
-Edit
-</a>
+        <a
+            href="manage_income.php?id=<?php echo $row['id']; ?>"
+            class="edit-btn"
+        >
+            <i class="fa-solid fa-pen-to-square"></i>
+            Edit
+        </a>
 
-&nbsp;
+        <a
+            href="javascript:void(0)"
+            class="delete-btn"
+            onclick="delete_confir('<?php echo $row['id'];?>','income.php')"
+        >
+            <i class="fa-solid fa-trash"></i>
+            Delete
+        </a>
 
-<a href="javascript:void(0)"
-onclick="delete_confir('<?php echo $row['id'];?>','income.php')">
-Delete
-</a>
-
-</td>
+    </td>
 
 </tr>
 
-<?php } ?>
+<?php
+}
+?>
 
 </table>
 
+</div>
+
 <?php
 }else{
-    echo "No data found";
+?>
+
+<div class="table-box">
+
+    <div class="no-data">
+
+        <i class="fa-solid fa-folder-open"></i>
+
+        <br><br>
+
+        No Income Found
+
+    </div>
+
+</div>
+
+<?php
 }
 ?>
+
+
+<script>
+
+const searchInput=document.getElementById("searchInput");
+
+searchInput.addEventListener("keyup",function(){
+
+    let filter=this.value.toLowerCase();
+
+    let rows=document.querySelectorAll(".table-box table tr");
+
+    for(let i=1;i<rows.length;i++){
+
+        let text=rows[i].innerText.toLowerCase();
+
+        if(text.indexOf(filter)>-1){
+            rows[i].style.display="";
+        }else{
+            rows[i].style.display="none";
+        }
+
+    }
+
+});
+
+</script>
+
 
 <?php
 include('footer.php');

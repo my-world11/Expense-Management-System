@@ -1,6 +1,14 @@
 </div>
 
-<div class="footer" style="margin-top:40px;padding:15px;background:#0d6efd;color:white;text-align:center;font-size:16px;">
+<div class="footer" style="
+    margin-left:230px;
+    margin-top:40px;
+    padding:15px;
+    background:#0d6efd;
+    color:white;
+    text-align:center;
+    font-size:16px;
+">
     © <?php echo date('Y');?> Expense Management System
 </div>
 
@@ -20,6 +28,7 @@ function delete_confir(id,page){
 
 function set_to_date(){
     var from_date=document.getElementById('from_date').value;
+
     if(document.getElementById('to_date')){
         document.getElementById('to_date').setAttribute("min",from_date);
     }
@@ -42,29 +51,35 @@ document.addEventListener("DOMContentLoaded",function(){
 
     /* Category Dropdown */
     if(document.getElementById("category_id")){
+
         new TomSelect("#category_id",{
             create:false,
             maxOptions:100,
             placeholder:"Select Category"
         });
+
     }
 
     /* Expense Date */
     if(document.querySelector("input[name='expense_date']")){
+
         flatpickr("input[name='expense_date']",{
             dateFormat:"Y-m-d",
             maxDate:"today",
             allowInput:false
         });
+
     }
 
     /* Income Date */
     if(document.querySelector("input[name='income_date']")){
+
         flatpickr("input[name='income_date']",{
             dateFormat:"Y-m-d",
             maxDate:"today",
             allowInput:false
         });
+
     }
 
 });

@@ -31,7 +31,11 @@ if(mysqli_num_rows($res)>0){
     <td>
         <a href="manage_category.php?id=<?php echo $row['id']; ?>">Edit</a>&nbsp;
 
-        <a href="javascript:void(0)"  onclick="delete_confir('<?php echo $row['id'];?>','category.php')">Delete</a>
+         <a href="javascript:void(0)"
+       class="delete-btn"
+       onclick="delete_confir('<?php echo $row['id'];?>','category.php')">
+
+        <i class="fa-solid fa-trash"></i> Delete</a>
     </td>
     </tr>
     <?php } ?>

@@ -1,56 +1,158 @@
 <?php
 include('header.php');
 
+
 if(isset($_POST['login'])){
 
-   $username=get_safe_value($_POST['username']);
-   $email=get_safe_value($_POST['email']);
-   $password=get_safe_value($_POST['password']);
 
-   $res=mysqli_query($con,"SELECT * FROM users WHERE username='$username' AND email='$email'");
+    $username=get_safe_value($_POST['username']);
+    $email=get_safe_value($_POST['email']);
+    $password=get_safe_value($_POST['password']);             
 
-   if(mysqli_num_rows($res)>0){
-      $row=mysqli_fetch_assoc($res);
 
-      $verify=password_verify($password,$row['password']);
+    $res=mysqli_query($con,
+        "SELECT * FROM users
+         WHERE username='$username'
+         AND email='$email'"
+    );
 
-      if($verify==1){
-         $_SESSION['UID']=$row['id'];
-         $_SESSION['UNAME']=$row['username'];
-         $_SESSION['UROLE']=$row['role'];
 
-         if($_SESSION['UROLE']=='User'){
-            redirect('dashboard.php');
-         }else{
-            redirect('category.php');
-         }
+    if(mysqli_num_rows($res)>0){
 
-      }else{
-         echo "<p style='color:red;text-align:center;'>Please enter valid password</p>";
-      }
+        $row=mysqli_fetch_assoc($res);
 
-   }else{
-      echo "<p style='color:red;text-align:center;'>Please enter valid username or email</p>";
-   }
+
+        /*
+        =====================================
+        CHECK SUSPENSION
+        =====================================
+        */
+
+        if($row['status']=="Suspended"){
+
+            $today=date('Y-m-d');
+
+
+            /*
+            If suspension date has passed,
+            automatically activate the account.
+            */
+
+            if(!empty($row['suspend_until']) &&
+               $today > $row['suspend_until']){
+
+                mysqli_query($con,
+                    "UPDATE users
+                     SET status='Active',
+                         suspend_until=NULL
+                     WHERE id='".$row['id']."'"
+                );
+
+                $row['status']="Active";
+
+            }else{
+
+                echo "
+                <p style='
+                    color:red;
+                    text-align:center;
+                    font-weight:bold;
+                    margin-top:20px;
+                '>
+                Your account has been suspended.
+                </p>
+                ";
+
+                include('footer.php');
+                exit;
+
+            }
+
+        }
+
+
+        /*
+        =====================================
+        PASSWORD VERIFY
+        =====================================
+        */
+
+        $verify = ($password == $row['password'] || password_verify($password, $row['password']));
+
+
+        if($verify==1){
+
+            $_SESSION['UID']=$row['id'];
+            $_SESSION['UNAME']=$row['username'];
+            $_SESSION['UROLE']=$row['role'];
+
+
+            if($_SESSION['UROLE']=='User'){
+
+                redirect('dashboard.php');
+
+            }else{
+
+                redirect('category.php');
+
+            }
+
+
+        }else{
+
+            echo "
+            <p style='
+                color:red;
+                text-align:center;
+                font-weight:bold;
+            '>
+            Please enter valid password
+            </p>
+            ";
+
+        }
+
+
+    }else{
+
+        echo "
+        <p style='
+            color:red;
+            text-align:center;
+            font-weight:bold;
+        '>
+        Please enter valid username or email
+        </p>
+        ";
+
+    }
+
 }
+
 ?>
 
+
 <style>
+
 .login-box{
     width:380px;
+    max-width:95%;
     margin:60px auto;
     background:#fff;
     padding:25px;
     border-radius:10px;
     box-shadow:0 0 15px rgba(0,0,0,.15);
 }
+
 .login-box h2{
     text-align:center;
     margin-bottom:20px;
 }
+
 .login-box label{
     font-weight:bold;
 }
+
 .login-box input[type=text],
 .login-box input[type=email],
 .login-box input[type=password]{
@@ -59,7 +161,9 @@ if(isset($_POST['login'])){
     margin:8px 0 15px;
     border:1px solid #ccc;
     border-radius:5px;
+    box-sizing:border-box;
 }
+
 .login-box input[type=submit]{
     width:100%;
     background:#0d6efd;
@@ -69,59 +173,121 @@ if(isset($_POST['login'])){
     border-radius:5px;
     cursor:pointer;
 }
+
 .login-box input[type=submit]:hover{
     background:#0b5ed7;
 }
+
 .links{
     text-align:center;
     margin-top:15px;
 }
+
 .links a{
     text-decoration:none;
+    color:#0d6efd;
 }
+
 </style>
+
 
 <div class="login-box">
 
+
 <h2>Login</h2>
+
 
 <form method="post">
 
+
 <label>Username</label>
-<input type="text" name="username" required>
+
+<input
+    type="text"
+    name="username"
+    required
+>
+
 
 <label>Gmail</label>
-<input type="email" name="email" placeholder="example@gmail.com" required>
+
+<input
+    type="email"
+    name="email"
+    placeholder="example@gmail.com"
+    required
+>
+
 
 <label>Password</label>
-<input type="password" name="password" id="password" required>
 
-<input type="checkbox" onclick="showPassword()"> Show Password
+<input
+    type="password"
+    name="password"
+    id="password"
+    required
+>
+
+
+<input
+    type="checkbox"
+    onclick="showPassword()"
+>
+Show Password
+
 
 <br><br>
 
-<input type="submit" name="login" value="Login">
+
+<input
+    type="submit"
+    name="login"
+    value="Login"
+>
+
 
 </form>
 
+
 <div class="links">
-<a href="register.php">Create New Account</a>
+
+<a href="register.php">
+    Create New Account
+</a>
+
 <br><br>
-<a href="forgot_password.php">Forgot Password?</a>
-</div>
+
+<a href="forgot_password.php">
+    Forgot Password?
+</a>
 
 </div>
+
+
+
+</div>
+
 
 <script>
+
 function showPassword(){
+
     var x=document.getElementById("password");
+
     if(x.type=="password"){
+
         x.type="text";
+
     }else{
+
         x.type="password";
+
     }
+
 }
+
 </script>
+
 
 <?php
 include('footer.php');
