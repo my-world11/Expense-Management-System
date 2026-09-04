@@ -19,15 +19,53 @@ function prx($data){
     </script>
     <?php
  }
- function checkUser(){
-   if(isset( $_SESSION['UID']) &&  $_SESSION['UID']!='') {
+  function checkUser(){
+    if(isset( $_SESSION['UID']) &&  $_SESSION['UID']!='') {
 
-}else{
-    redirect('index.php');
+        global $con;
 
-}
-   
- }
+        $res=mysqli_query(
+            $con,
+            "select status,suspend_until from users where id='".$_SESSION['UID']."'"
+        );
+
+        if($row=mysqli_fetch_assoc($res)){
+
+            if($row['status']=="suspended"){
+
+                $today = date('Y-m-d');
+
+                if(
+                    !empty($row['suspend_until']) &&
+                    $today >= $row['suspend_until']
+                ){
+
+                    mysqli_query(
+                        $con,
+                        "UPDATE users
+                          SET status='active',
+                              suspend_until=NULL
+                          WHERE id='".$_SESSION['UID']."'"
+                    );
+
+                }else{
+
+                    unset($_SESSION['UID']);
+                    unset($_SESSION['UNAME']);
+                    unset($_SESSION['UROLE']);
+
+                    redirect('index.php?suspended=1');
+
+                }
+
+            }
+
+        }
+
+    }else{
+        redirect('index.php');
+    }
+  }
 
  function getCategory($category_id='',$page=''){
    global $con;

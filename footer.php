@@ -1,13 +1,14 @@
 </div>
 
 <div class="footer" style="
-    margin-left:230px;
+    width:100%;
     margin-top:40px;
     padding:15px;
     background:#0d6efd;
     color:white;
     text-align:center;
     font-size:16px;
+    box-sizing:border-box;
 ">
     © <?php echo date('Y');?> Expense Management System
 </div>

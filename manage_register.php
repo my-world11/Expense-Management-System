@@ -9,7 +9,7 @@ $username="";
 $email="";
 $password="";
 $role="User";
-$status="Active";
+$status="active";
 $label="Add";
 
 
@@ -363,24 +363,24 @@ Admin
 
 <select name="status">
 
-<option value="Active"
+<option value="active"
 <?php
-if($status=="Active"){
+if($status=="active"){
     echo "selected";
 }
 ?>
 >
-Active
+active
 </option>
 
-<option value="Suspended"
+<option value="suspended"
 <?php
-if($status=="Suspended"){
+if($status=="suspended"){
     echo "selected";
 }
 ?>
 >
-Suspended
+suspended
 </option>
 
 </select>

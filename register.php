@@ -38,9 +38,9 @@ if(isset($_POST['register'])){
                 $password=password_hash($password,PASSWORD_DEFAULT);
 
                 mysqli_query($con,"insert into users
-                (username,email,password,role,status,suspend_until)
-                values
-                ('$username','$email','$password','User','Active',NULL)");
+                 (username,email,password,role,status,suspend_until)
+                 values
+                 ('$username','$email','$password','User','active',NULL)");
 
                 redirect('index.php');
 
