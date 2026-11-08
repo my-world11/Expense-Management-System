@@ -1,529 +1,1378 @@
+
 <?php
 include('header.php');
 checkUser();
 userArea();
 include('user_header.php');
 
-function getCleanNumber($data) {
+function dashboardNumber($data){
     preg_match('/[0-9]+(\.[0-9]+)?/', strip_tags($data), $matches);
     return isset($matches[0]) ? (float)$matches[0] : 0;
 }
 
-// Data fetch
-$incToday     = getCleanNumber(getDashboardIncome('today'));
-$incYesterday = getCleanNumber(getDashboardIncome('yesterday'));
-$incMonth     = getCleanNumber(getDashboardIncome('month'));
-$incYear      = getCleanNumber(getDashboardIncome('year'));
+function dashboardMoney($amount){
+    $amount = (float)$amount;
 
-$expToday     = getCleanNumber(getDashboardExpense('today'));
-$expYesterday = getCleanNumber(getDashboardExpense('yesterday'));
-$expMonth     = getCleanNumber(getDashboardExpense('month'));
-$expYear      = getCleanNumber(getDashboardExpense('year'));
-
-// Red Warning limit setup
-$limitToday = 1000;
-$limitMonth = 25000;
-
-// =========================================================================
-// database बाट user ले save गरेको category र amount तानेर JSON मा राख्ने helper functions
-// (तपाईंको database function हरू अनुसार यसलाई मिलाउन सक्नुहुन्छ)
-// =========================================================================
-function getCategoriesJson($type, $period) {
-    global $con; // यदि तपाईंको db connection variable अर्कै छ भने यहाँ मिलाउनुहोला
-    
-    // यहाँ database बाट user ले लेखेको category name र sum(amount) select गर्ने query हुन्छ।
-    // जस्तै: SELECT category_name as name, SUM(amount) as amount FROM transactions WHERE type='$type' AND ... GROUP BY category_name
-    
-    // अहिलेलाई तपाईंले बुझ्न र टेस्ट गर्न सजिलो होोस् भनेर यसले database table बाट वा function बाट data तान्ने तरिका देखाएको छ:
-    $categories = [];
-    
-    // यदि तपाईंको प्रोजेक्टमा पहिले नै category तान्ने function छ भने यहाँ राख्न सक्नुहुन्छ।
-    // उदाहरणको लागि database query को format:
-    /*
-    $userId = $_SESSION['USER_ID'];
-    $sql = "SELECT category AS name, SUM(amount) AS amount FROM my_table WHERE user_id='$userId' AND type='$type' ... GROUP BY category";
-    $res = mysqli_query($con, $sql);
-    while($row = mysqli_fetch_assoc($res)){
-        $categories[] = $row;
+    if($amount >= 1000000000){
+        return rtrim(rtrim(number_format($amount / 1000000000, 2), '0'), '.') . 'B';
     }
-    */
-    
-    // Fallback: यदि database मा query मिलेन भने खाली array जान्छ तर तल JavaScript मा dynamic handle हुन्छ
-    return json_encode($categories);
+
+    if($amount >= 1000000){
+        return rtrim(rtrim(number_format($amount / 1000000, 2), '0'), '.') . 'M';
+    }
+
+    if($amount >= 1000){
+        return rtrim(rtrim(number_format($amount / 1000, 2), '0'), '.') . 'K';
+    }
+
+    return number_format($amount, 2);
 }
+
+function dashboardRange($period){
+    $today = date('Y-m-d');
+
+    if($period == 'today'){
+        return [$today, $today];
+    }
+
+    if($period == 'yesterday'){
+        $yesterday = date('Y-m-d', strtotime('yesterday'));
+        return [$yesterday, $yesterday];
+    }
+
+    if($period == 'month'){
+        return [date('Y-m-d', strtotime('-1 month')), $today];
+    }
+
+    if($period == 'year'){
+        return [date('Y-m-d', strtotime('-1 year')), $today];
+    }
+
+    return [$today, $today];
+}
+
+$incToday     = dashboardNumber(getDashboardIncome('today'));
+$incYesterday = dashboardNumber(getDashboardIncome('yesterday'));
+$incMonth     = dashboardNumber(getDashboardIncome('month'));
+$incYear      = dashboardNumber(getDashboardIncome('year'));
+
+$expToday     = dashboardNumber(getDashboardExpense('today'));
+$expYesterday = dashboardNumber(getDashboardExpense('yesterday'));
+$expMonth     = dashboardNumber(getDashboardExpense('month'));
+$expYear      = dashboardNumber(getDashboardExpense('year'));
+
+$monthlyWarning = ($incMonth > 0 && $expMonth > ($incMonth * 0.40));
+$warningPercent = $incMonth > 0 ? ($expMonth / $incMonth) * 100 : 0;
+
+$daysInCurrentMonth = (int)date('t');
+$monthlyAllowedExpense = $incMonth * 0.40;
+$dailyAllowedExpense = $daysInCurrentMonth > 0 ? ($monthlyAllowedExpense / $daysInCurrentMonth) : 0;
+$remainingMonthlyAllowance = max(0, $monthlyAllowedExpense - $expMonth);
+
+$periods = ['today','yesterday','month','year'];
+
+$incomeCategories = [];
+$expenseCategories = [];
+
+$transactions = [
+    'income' => [],
+    'expense' => []
+];
+
+foreach($periods as $period){
+
+    [$from, $to] = dashboardRange($period);
+
+    $incomeCategories[$period] = [];
+    $expenseCategories[$period] = [];
+
+    $incomeSql = "SELECT source, income_category, amount, details, income_date
+                  FROM income
+                  WHERE added_by='" . $_SESSION['UID'] . "'
+                  AND income_date BETWEEN '$from' AND '$to'
+                  ORDER BY income_date DESC, id DESC";
+
+    $incomeRes = mysqli_query($con, $incomeSql);
+
+    if($incomeRes){
+
+        while($row = mysqli_fetch_assoc($incomeRes)){
+
+            $category = !empty($row['income_category']) ? $row['income_category'] : 'Other';
+            $amount = (float)$row['amount'];
+
+            if(!isset($incomeCategories[$period][$category])){
+                $incomeCategories[$period][$category] = 0;
+            }
+
+            $incomeCategories[$period][$category] += $amount;
+
+            $transactions['income'][$period][] = [
+                'source' => $row['source'],
+                'category' => $category,
+                'amount' => $amount,
+                'details' => !empty($row['details']) ? $row['details'] : 'No details',
+                'date' => $row['income_date']
+            ];
+        }
+    }
+
+    $expenseSql = "SELECT expense.item, expense.price, expense.details,
+                          expense.expense_date, expense.expense_type,
+                          category.name AS category_name
+                   FROM expense
+                   LEFT JOIN category ON expense.category_id = category.id
+                   WHERE expense.added_by='" . $_SESSION['UID'] . "'
+                   AND expense.expense_date BETWEEN '$from' AND '$to'
+                   ORDER BY expense.expense_date DESC, expense.id DESC";
+
+    $expenseRes = mysqli_query($con, $expenseSql);
+
+    if($expenseRes){
+
+        while($row = mysqli_fetch_assoc($expenseRes)){
+
+            $category = !empty($row['category_name']) ? $row['category_name'] : 'Other';
+            $amount = (float)$row['price'];
+
+            if(!isset($expenseCategories[$period][$category])){
+                $expenseCategories[$period][$category] = 0;
+            }
+
+            $expenseCategories[$period][$category] += $amount;
+
+            $transactions['expense'][$period][] = [
+                'item' => $row['item'],
+                'category' => $category,
+                'amount' => $amount,
+                'details' => !empty($row['details']) ? $row['details'] : 'No details',
+                'date' => $row['expense_date'],
+                'type' => !empty($row['expense_type']) ? $row['expense_type'] : 'Other'
+            ];
+        }
+    }
+}
+
+$incomeCategories = array_map(function($items){
+
+    $result = [];
+
+    foreach($items as $name => $amount){
+        $result[] = [
+            'name' => $name,
+            'amount' => $amount
+        ];
+    }
+
+    return $result;
+
+}, $incomeCategories);
+
+$expenseCategories = array_map(function($items){
+
+    $result = [];
+
+    foreach($items as $name => $amount){
+        $result[] = [
+            'name' => $name,
+            'amount' => $amount
+        ];
+    }
+
+    return $result;
+
+}, $expenseCategories);
 ?>
 
-<style>
-/* Base Styling */
-body { background: #f8fafc; font-family: 'Inter', system-ui, sans-serif; color: #0f172a; }
+<link rel="stylesheet" href="dashboard.css?v=6">
 
-.tab-container { margin: 20px 0; }
-.tab-btn {
-    padding: 12px 26px;
-    font-weight: 800;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    background: #cbd5e1;
-    color: #1e293b;
-    font-size: 15px;
-}
-.tab-btn.active {
-    background: #2563eb;
-    color: white;
-}
+<div class="dashboard-page">
 
-/* Cards Grid */
-.card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 18px;
-    margin-bottom: 30px;
-}
+    <div class="dashboard-heading">
 
-.card {
-    background: white;
-    padding: 22px;
-    border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-    border: 1px solid #e2e8f0;
-}
-
-.card-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    color: #0f172a;
-    font-weight: 800;
-    text-transform: uppercase;
-}
-
-.card-icon { font-size: 24px; }
-
-.card p { 
-    font-size: 28px; 
-    font-weight: 900; 
-    margin: 10px 0 16px 0; 
-    color: #0f172a; 
-}
-
-.card.red-alert {
-    background: #ef4444;
-    color: white;
-    border: none;
-}
-.card.red-alert .card-title, .card.red-alert p { color: white; }
-
-.btn {
-    padding: 9px 16px;
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 800;
-    width: 100%;
-}
-.card.red-alert .btn { background: white; color: #ef4444; border: none; }
-
-/* Charts Layout */
-.charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.chart-card {
-    background: white;
-    padding: 22px;
-    border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-    border: 1px solid #e2e8f0;
-}
-
-.chart-card h4 {
-    margin: 0 0 15px 0;
-    font-size: 16px;
-    font-weight: 900;
-    color: #0f172a;
-}
-
-/* Fullscreen Modal Styling */
-.fullscreen-modal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(8px);
-    z-index: 99999;
-    justify-content: center;
-    align-items: center;
-}
-
-.fs-modal-box {
-    background: white;
-    padding: 28px;
-    border-radius: 20px;
-    width: 90%;
-    max-width: 480px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.fs-close-btn {
-    position: absolute;
-    top: 15px; right: 20px;
-    font-size: 26px;
-    font-weight: bold;
-    cursor: pointer;
-    color: #0f172a;
-}
-
-.pie-chart-container {
-    margin: 15px auto;
-    width: 200px;
-    height: 200px;
-}
-
-.source-list {
-    margin-top: 15px;
-    text-align: left;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 15px;
-}
-
-.source-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    font-size: 14px;
-    border-bottom: 1px dashed #f1f5f9;
-}
-
-.source-name {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 800;
-    color: #0f172a;
-}
-
-.source-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.source-val {
-    font-weight: 900;
-    color: #0f172a;
-}
-
-@media(max-width: 850px) {
-    .charts-grid { grid-template-columns: 1fr; }
-}
-</style>
-
-<h2>💳 Dashboard</h2>
-
-<!-- Switch Tabs -->
-<div class="tab-container">
-    <button class="tab-btn active" id="incBtn" onclick="showTab('income')">💰 Income</button>
-    <button class="tab-btn" id="expBtn" onclick="showTab('expense')">💸 Expense</button>
-</div>
-
-<!-- Income Cards Grid -->
-<div id="incomeArea" class="card-grid">
-    <div class="card">
-        <div class="card-title"><span class="card-icon">☀️</span> Today Income</div>
-        <p>Rs. <?php echo number_format($incToday); ?></p>
-        <button class="btn" onclick="openFullModal('Today Income', <?php echo $incToday; ?>, 'Income', <?php echo getCategoriesJson('Income', 'today'); ?>)">View Details</button>
-    </div>
-    <div class="card">
-        <div class="card-title"><span class="card-icon">⏪</span> Yesterday Income</div>
-        <p>Rs. <?php echo number_format($incYesterday); ?></p>
-        <button class="btn" onclick="openFullModal('Yesterday Income', <?php echo $incYesterday; ?>, 'Income', <?php echo getCategoriesJson('Income', 'yesterday'); ?>)">View Details</button>
-    </div>
-    <div class="card">
-        <div class="card-title"><span class="card-icon">🗓️</span> This Month Income</div>
-        <p>Rs. <?php echo number_format($incMonth); ?></p>
-        <button class="btn" onclick="openFullModal('This Month Income', <?php echo $incMonth; ?>, 'Income', <?php echo getCategoriesJson('Income', 'month'); ?>)">View Details</button>
-    </div>
-    <div class="card">
-        <div class="card-title"><span class="card-icon">🏆</span> This Year Income</div>
-        <p>Rs. <?php echo number_format($incYear); ?></p>
-        <button class="btn" onclick="openFullModal('This Year Income', <?php echo $incYear; ?>, 'Income', <?php echo getCategoriesJson('Income', 'year'); ?>)">View Details</button>
-    </div>
-</div>
-
-<!-- Expense Cards Grid -->
-<div id="expenseArea" class="card-grid" style="display:none;">
-    <div class="card <?php echo ($expToday > $limitToday) ? 'red-alert' : ''; ?>">
-        <div class="card-title"><span class="card-icon">🚨</span> Today Expense <?php if($expToday > $limitToday) echo '⚠️'; ?></div>
-        <p>Rs. <?php echo number_format($expToday); ?></p>
-        <button class="btn" onclick="openFullModal('Today Expense', <?php echo $expToday; ?>, 'Expense', <?php echo getCategoriesJson('Expense', 'today'); ?>)">View Details</button>
-    </div>
-
-    <div class="card">
-        <div class="card-title"><span class="card-icon">⏳</span> Yesterday Expense</div>
-        <p>Rs. <?php echo number_format($expYesterday); ?></p>
-        <button class="btn" onclick="openFullModal('Yesterday Expense', <?php echo $expYesterday; ?>, 'Expense', <?php echo getCategoriesJson('Expense', 'yesterday'); ?>)">View Details</button>
-    </div>
-
-    <div class="card <?php echo ($expMonth > $limitMonth) ? 'red-alert' : ''; ?>">
-        <div class="card-title"><span class="card-icon">📉</span> This Month Expense <?php if($expMonth > $limitMonth) echo '⚠️'; ?></div>
-        <p>Rs. <?php echo number_format($expMonth); ?></p>
-        <button class="btn" onclick="openFullModal('This Month Expense', <?php echo $expMonth; ?>, 'Expense', <?php echo getCategoriesJson('Expense', 'month'); ?>)">View Details</button>
-    </div>
-
-    <div class="card">
-        <div class="card-title"><span class="card-icon">📅</span> This Year Expense</div>
-        <p>Rs. <?php echo number_format($expYear); ?></p>
-        <button class="btn" onclick="openFullModal('This Year Expense', <?php echo $expYear; ?>, 'Expense', <?php echo getCategoriesJson('Expense', 'year'); ?>)">View Details</button>
-    </div>
-</div>
-
-<!-- Visual Charts Section -->
-<div class="charts-grid">
-    <div class="chart-card">
-        <h4>📊 Overall Comparison</h4>
-        <canvas id="barChart" width="400" height="230"></canvas>
-    </div>
-    <div class="chart-card">
-        <h4>📈 Expense Trend Curve</h4>
-        <canvas id="lineChart" width="400" height="230"></canvas>
-    </div>
-</div>
-
-<!-- Full Screen Modal Popup -->
-<div id="fsModal" class="fullscreen-modal">
-    <div class="fs-modal-box">
-        <span class="fs-close-btn" onclick="closeFullModal()">&times;</span>
-        <h3 id="popTitle" style="margin:0; font-weight:900; color:#0f172a; font-size: 20px;">Details Summary</h3>
-        
-        <h2 id="popAmount" style="color:#2563eb; font-weight:900; margin:10px 0 5px 0;">Rs. 0</h2>
-        <div id="popStatus"></div>
-
-        <div class="pie-chart-container">
-            <canvas id="pieCanvas" width="200" height="200"></canvas>
+        <div>
+            <h2><i class="fa-solid fa-chart-pie"></i> Dashboard</h2>
+            <p>Overview of your income and expenses</p>
         </div>
 
-        <div class="source-list" id="sourceListArea"></div>
+        <div class="dashboard-date">
+            <i class="fa-regular fa-calendar"></i>
+            <?php echo date('d M Y'); ?>
+        </div>
+
     </div>
+
+    <div class="dashboard-tabs">
+
+        <button class="dashboard-tab active" id="incomeTab" onclick="showDashboardTab('income')">
+            <i class="fa-solid fa-money-bill-trend-up"></i> Income
+        </button>
+
+        <button class="dashboard-tab" id="expenseTab" onclick="showDashboardTab('expense')">
+            <i class="fa-solid fa-money-bill-wave"></i> Expense
+        </button>
+
+    </div>
+
+    <!-- INCOME SECTION -->
+
+    <section id="incomeSection" class="dashboard-section">
+
+        <div class="summary-grid">
+
+            <div class="summary-card income-card today-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <span>Today Income</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($incToday); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('income','today')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+            <div class="summary-card income-card yesterday-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <span>Yesterday Income</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($incYesterday); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('income','yesterday')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+            <div class="summary-card income-card month-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <span>This Month Income</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($incMonth); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('income','month')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+            <div class="summary-card income-card year-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-trophy"></i></div>
+                    <span>This Year Income</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($incYear); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('income','year')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="analysis-grid">
+
+            <div class="analysis-card large-chart-card">
+
+                <div class="analysis-title">
+                    <div>
+                        <h3><i class="fa-solid fa-chart-line"></i> Income Overview</h3>
+                        <p>Income amount across your dashboard periods</p>
+                    </div>
+                </div>
+
+                <canvas id="incomeTrendChart"></canvas>
+
+            </div>
+
+            <div class="analysis-card pie-card">
+
+                <div class="analysis-title">
+
+                    <div>
+                        <h3><i class="fa-solid fa-chart-pie"></i> Income Breakdown</h3>
+                        <p id="incomePiePeriod">This Month</p>
+                    </div>
+
+                    <div class="period-buttons income-period-buttons">
+
+                        <button onclick="setPeriodButton('.income-period-buttons','today'); drawIncomePie('today')">Today</button>
+
+                        <button onclick="setPeriodButton('.income-period-buttons','yesterday'); drawIncomePie('yesterday')">Yesterday</button>
+
+                        <button class="active" onclick="setPeriodButton('.income-period-buttons','month'); drawIncomePie('month')">This Month</button>
+
+                        <button onclick="setPeriodButton('.income-period-buttons','year'); drawIncomePie('year')">This Year</button>
+
+                    </div>
+
+                </div>
+
+                <div class="pie-wrap">
+                    <canvas id="incomePieChart"></canvas>
+                    <div id="incomePieEmpty" class="chart-empty">No income data</div>
+                </div>
+
+                <div id="incomeTotalBelow" class="pie-total"></div>
+                <div id="incomeLegend" class="chart-legend"></div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- EXPENSE SECTION -->
+
+    <section id="expenseSection" class="dashboard-section" style="display:none;">
+
+        <div class="summary-grid">
+
+            <div class="summary-card expense-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <span>Today Expense</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($expToday); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('expense','today')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+            <div class="summary-card expense-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <span>Yesterday Expense</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($expYesterday); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('expense','yesterday')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+            <div class="summary-card expense-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <span>This Month Expense</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($expMonth); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('expense','month')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+            <div class="summary-card expense-card">
+
+                <div class="summary-top">
+                    <div class="summary-icon"><i class="fa-solid fa-calendar"></i></div>
+                    <span>This Year Expense</span>
+                </div>
+
+                <h3>Rs. <?php echo dashboardMoney($expYear); ?></h3>
+
+                <button class="details-btn" onclick="openDetails('expense','year')">
+                    View Details <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+        <?php if($incMonth > 0){ ?>
+
+            <div class="monthly-warning <?php echo $monthlyWarning ? 'warning-danger' : 'warning-safe'; ?>">
+
+                <div class="warning-icon">
+                    <i class="fa-solid <?php echo $monthlyWarning ? 'fa-triangle-exclamation' : 'fa-circle-check'; ?>"></i>
+                </div>
+
+                <div class="warning-content">
+
+                    <?php if($monthlyWarning){ ?>
+
+                        <strong>Monthly Expense Warning</strong>
+
+                        <p>
+                            Your expense is <?php echo number_format($warningPercent,1); ?>%
+                            of your monthly income and has crossed the 40% limit.
+                        </p>
+
+                    <?php }else{ ?>
+
+                        <strong>Daily Spending Guidance</strong>
+
+                        <p>
+                            Based on your monthly income, you can spend up to
+                            <b>Rs. <?php echo dashboardMoney($dailyAllowedExpense); ?></b>
+                            per day to keep monthly expense within 40%.
+                        </p>
+
+                    <?php } ?>
+
+                    <div class="budget-figures">
+
+                        <span>
+                            40% Monthly Limit:
+                            <b>Rs. <?php echo dashboardMoney($monthlyAllowedExpense); ?></b>
+                        </span>
+
+                        <span>
+                            Remaining:
+                            <b>Rs. <?php echo dashboardMoney($remainingMonthlyAllowance); ?></b>
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        <?php }else{ ?>
+
+            <div class="monthly-warning warning-neutral">
+
+                <div class="warning-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+
+                <div class="warning-content">
+
+                    <strong>Spending Guidance</strong>
+
+                    <p>
+                        Add monthly income to calculate your 40% expense limit
+                        and recommended daily spending amount.
+                    </p>
+
+                </div>
+
+            </div>
+
+        <?php } ?>
+
+        <div class="analysis-grid">
+
+            <div class="analysis-card large-chart-card">
+
+                <div class="analysis-title">
+                    <div>
+                        <h3><i class="fa-solid fa-chart-line"></i> Expense Overview</h3>
+                        <p>Expense amount across your dashboard periods</p>
+                    </div>
+                </div>
+
+                <canvas id="expenseTrendChart"></canvas>
+
+            </div>
+
+            <div class="analysis-card pie-card">
+
+                <div class="analysis-title">
+
+                    <div>
+                        <h3><i class="fa-solid fa-chart-pie"></i> Expense Breakdown</h3>
+                        <p id="expensePiePeriod">This Month</p>
+                    </div>
+
+                    <div class="period-buttons expense-period-buttons">
+
+                        <button onclick="setPeriodButton('.expense-period-buttons','today'); drawExpensePie('today')">Today</button>
+
+                        <button onclick="setPeriodButton('.expense-period-buttons','yesterday'); drawExpensePie('yesterday')">Yesterday</button>
+
+                        <button class="active" onclick="setPeriodButton('.expense-period-buttons','month'); drawExpensePie('month')">This Month</button>
+
+                        <button onclick="setPeriodButton('.expense-period-buttons','year'); drawExpensePie('year')">This Year</button>
+
+                    </div>
+
+                </div>
+
+                <div class="pie-wrap">
+                    <canvas id="expensePieChart"></canvas>
+                    <div id="expensePieEmpty" class="chart-empty">No expense data</div>
+                </div>
+
+                <div id="expenseTotalBelow" class="pie-total"></div>
+                <div id="expenseLegend" class="chart-legend"></div>
+
+            </div>
+
+        </div>
+
+    </section>
+
 </div>
 
-<?php include('footer.php'); ?>
+<!-- COMPACT DETAILS MODAL -->
+
+<div id="detailsModal" class="details-modal">
+
+    <div class="details-box">
+
+        <button class="modal-close" onclick="closeDetails()">&times;</button>
+
+        <div class="modal-heading">
+
+            <div id="modalIcon" class="modal-icon"></div>
+
+            <div>
+                <h2 id="modalTitle">Transaction Details</h2>
+                <p id="modalSubtitle"></p>
+            </div>
+
+        </div>
+
+        <div class="modal-analysis">
+
+            <div class="modal-chart-area">
+                <canvas id="detailsPieChart"></canvas>
+                <div id="detailsPieEmpty" class="chart-empty">No chart data</div>
+            </div>
+
+            <div class="modal-summary-area">
+                <div class="modal-total" id="modalTotal">Rs. 0</div>
+                <div id="detailsPieLegend" class="chart-legend"></div>
+            </div>
+
+        </div>
+
+        <div class="details-section-title">
+            Individual Transactions
+        </div>
+
+        <div id="transactionList" class="transaction-list"></div>
+
+    </div>
+
+</div>
 
 <script>
-const incValues = {
-    today: <?php echo $incToday; ?>,
-    yesterday: <?php echo $incYesterday; ?>,
-    month: <?php echo $incMonth; ?>,
-    year: <?php echo $incYear; ?>
-};
 
-const expValues = {
-    today: <?php echo $expToday; ?>,
-    yesterday: <?php echo $expYesterday; ?>,
-    month: <?php echo $expMonth; ?>,
-    year: <?php echo $expYear; ?>
-};
+const dashboardData = <?php echo json_encode([
+    'income' => [
+        'today' => $incToday,
+        'yesterday' => $incYesterday,
+        'month' => $incMonth,
+        'year' => $incYear
+    ],
+    'expense' => [
+        'today' => $expToday,
+        'yesterday' => $expYesterday,
+        'month' => $expMonth,
+        'year' => $expYear
+    ],
+    'incomeCategories' => $incomeCategories,
+    'expenseCategories' => $expenseCategories,
+    'transactions' => $transactions
+], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
 
-function showTab(type) {
-    if(type === 'income') {
-        document.getElementById('incomeArea').style.display = 'grid';
-        document.getElementById('expenseArea').style.display = 'none';
-        document.getElementById('incBtn').classList.add('active');
-        document.getElementById('expBtn').classList.remove('active');
-    } else {
-        document.getElementById('incomeArea').style.display = 'none';
-        document.getElementById('expenseArea').style.display = 'grid';
-        document.getElementById('expBtn').classList.add('active');
-        document.getElementById('incBtn').classList.remove('active');
-    }
-}
 
-function drawBarChart() {
-    const canvas = document.getElementById('barChart');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
-    const data = [<?php echo "$incMonth, $expMonth, $incYear, $expYear"; ?>];
-    const fullLabels = ["Monthly Inc", "Monthly Exp", "Yearly Inc", "Yearly Exp"];
-    const colors = ["#2563eb", "#ef4444", "#3b82f6", "#f87171"];
-    const maxVal = Math.max(...data, 100);
+function money(value){
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    value = Number(value || 0);
 
-    ctx.strokeStyle = "#e2e8f0";
-    ctx.lineWidth = 1;
-    for(let y = 30; y <= 170; y += 35) {
-        ctx.beginPath();
-        ctx.moveTo(10, y);
-        ctx.lineTo(390, y);
-        ctx.stroke();
+    if(value >= 1000000000){
+        return (value / 1000000000).toFixed(2).replace(/\.?0+$/, '') + 'B';
     }
 
-    data.forEach((val, i) => {
-        const barHeight = (val / maxVal) * 120;
-        const x = 20 + i * 92;
-        const y = 170 - barHeight;
+    if(value >= 1000000){
+        return (value / 1000000).toFixed(2).replace(/\.?0+$/, '') + 'M';
+    }
 
-        ctx.fillStyle = colors[i];
-        ctx.beginPath();
-        ctx.roundRect(x, y, 55, barHeight, [6, 6, 0, 0]);
-        ctx.fill();
+    if(value >= 1000){
+        return (value / 1000).toFixed(2).replace(/\.?0+$/, '') + 'K';
+    }
 
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 12px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("Rs." + (val >= 1000 ? (val/1000).toFixed(1) + "k" : val), x + 27, y - 8);
-
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "900 12px sans-serif";
-        ctx.fillText(fullLabels[i], x + 27, 195);
+    return value.toLocaleString('en-IN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
     });
+
 }
 
-function drawLineChart() {
-    const canvas = document.getElementById('lineChart');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
 
-    const points = [expValues.today, expValues.yesterday, expValues.month];
-    const labels = ["Today Exp", "Yesterday Exp", "Month Total"];
-    const maxVal = Math.max(...points, 100);
+/* DASHBOARD TAB */
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function showDashboardTab(type){
 
-    ctx.strokeStyle = "#e2e8f0";
-    ctx.lineWidth = 1;
-    for(let y = 30; y <= 170; y += 35) {
-        ctx.beginPath();
-        ctx.moveTo(20, y);
-        ctx.lineTo(380, y);
-        ctx.stroke();
+    const incomeSection = document.getElementById('incomeSection');
+    const expenseSection = document.getElementById('expenseSection');
+    const incomeTab = document.getElementById('incomeTab');
+    const expenseTab = document.getElementById('expenseTab');
+
+    if(type === 'income'){
+
+        incomeSection.style.display = 'block';
+        expenseSection.style.display = 'none';
+
+        incomeTab.classList.add('active');
+        expenseTab.classList.remove('active');
+
+        requestAnimationFrame(() => {
+
+            drawTrend(
+                'incomeTrendChart',
+                [
+                    dashboardData.income.today,
+                    dashboardData.income.yesterday,
+                    dashboardData.income.month,
+                    dashboardData.income.year
+                ],
+                ['Today', 'Yesterday', 'Month', 'Year'],
+                '#16a34a'
+            );
+
+        });
+
+    }else{
+
+        incomeSection.style.display = 'none';
+        expenseSection.style.display = 'block';
+
+        incomeTab.classList.remove('active');
+        expenseTab.classList.add('active');
+
+        requestAnimationFrame(() => {
+
+            drawTrend(
+                'expenseTrendChart',
+                [
+                    dashboardData.expense.today,
+                    dashboardData.expense.yesterday,
+                    dashboardData.expense.month,
+                    dashboardData.expense.year
+                ],
+                ['Today', 'Yesterday', 'Month', 'Year'],
+                '#ef4444'
+            );
+
+        });
+
     }
 
-    const coords = points.map((val, i) => ({
-        x: 60 + i * 135,
-        y: 160 - (val / maxVal) * 110,
-        val: val
+}
+
+
+/* TREND CHART */
+
+function drawTrend(canvasId, values, labels, lineColor){
+
+    const canvas = document.getElementById(canvasId);
+
+    if(!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+
+    if(rect.width <= 0) return;
+
+    const width = Math.max(320, Math.floor(rect.width));
+    const height = 300;
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+
+    canvas.style.width = '100%';
+    canvas.style.height = height + 'px';
+
+    const ctx = canvas.getContext('2d');
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const left = 65;
+    const right = 25;
+    const top = 25;
+    const bottom = 55;
+
+    const chartWidth = width - left - right;
+    const chartHeight = height - top - bottom;
+
+    const actualMax = Math.max(...values);
+    const maxValue = Math.max(actualMax, 100);
+
+    const noData = values.every(value => Number(value) === 0);
+
+    ctx.clearRect(0, 0, width, height);
+
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#64748b';
+
+    for(let i = 0; i <= 4; i++){
+
+        const y = top + (chartHeight / 4) * i;
+        const value = maxValue - (maxValue / 4) * i;
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.moveTo(left, y);
+        ctx.lineTo(width - right, y);
+        ctx.stroke();
+
+        ctx.fillText('Rs. ' + money(value), left - 10, y);
+
+    }
+
+    const points = values.map((value, index) => ({
+
+        x: left + (chartWidth / (values.length - 1)) * index,
+
+        y: top + chartHeight - ((value / maxValue) * chartHeight),
+
+        value: Number(value)
+
     }));
 
-    const gradient = ctx.createLinearGradient(0, 0, 0, 180);
-    gradient.addColorStop(0, 'rgba(37, 99, 235, 0.25)');
-    gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+    if(noData){
 
-    ctx.beginPath();
-    ctx.moveTo(coords[0].x, 170);
-    coords.forEach(p => ctx.lineTo(p.x, p.y));
-    ctx.lineTo(coords[coords.length - 1].x, 170);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '600 14px Arial';
+        ctx.fillStyle = '#94a3b8';
 
-    ctx.beginPath();
-    ctx.strokeStyle = "#2563eb";
-    ctx.lineWidth = 3;
-    coords.forEach((p, i) => {
-        if(i === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-    });
-    ctx.stroke();
+        ctx.fillText(
+            'No data available',
+            width / 2,
+            top + chartHeight / 2
+        );
 
-    coords.forEach((p, i) => {
+    }else{
+
+        const gradient = ctx.createLinearGradient(
+            0,
+            top,
+            0,
+            height - bottom
+        );
+
+        gradient.addColorStop(0, lineColor + '30');
+        gradient.addColorStop(1, lineColor + '00');
+
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 6, 0, 2 * Math.PI);
-        ctx.fillStyle = "#ffffff";
+
+        ctx.moveTo(points[0].x, height - bottom);
+
+        points.forEach(point => {
+            ctx.lineTo(point.x, point.y);
+        });
+
+        ctx.lineTo(
+            points[points.length - 1].x,
+            height - bottom
+        );
+
+        ctx.closePath();
+
+        ctx.fillStyle = gradient;
         ctx.fill();
-        ctx.strokeStyle = "#2563eb";
+
+        ctx.beginPath();
+
+        points.forEach((point, index) => {
+
+            if(index === 0){
+                ctx.moveTo(point.x, point.y);
+            }else{
+                ctx.lineTo(point.x, point.y);
+            }
+
+        });
+
+        ctx.strokeStyle = lineColor;
         ctx.lineWidth = 3;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
         ctx.stroke();
 
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "900 12px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("Rs." + p.val, p.x, p.y - 12);
+        points.forEach(point => {
 
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "900 12px sans-serif";
-        ctx.fillText(labels[i], p.x, 195);
-    });
-}
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
 
-// =========================================================================
-// यहाँ पूर्ण रूपमा डाइनामिक रूपमा database बाट आएको exact category नाम देखाउने function
-// =========================================================================
-function openFullModal(title, totalVal, type, categoriesData) {
-    document.getElementById('fsModal').style.display = 'flex';
-    document.getElementById('popTitle').innerText = title;
-    document.getElementById('popAmount').innerText = 'Rs. ' + Number(totalVal).toLocaleString();
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
 
-    if(type === 'Expense' && totalVal > 1000) {
-        document.getElementById('popStatus').innerHTML = '<span style="color:#ef4444; font-weight:800; font-size:13px;">⚠️ High Expense Warning!</span>';
-    } else {
-        document.getElementById('popStatus').innerHTML = '<span style="color:#10b981; font-weight:800; font-size:13px;">✅ Normal Range</span>';
+            ctx.strokeStyle = lineColor;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            if(point.value > 0){
+
+                ctx.font = '700 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillStyle = '#1e293b';
+
+                ctx.fillText(
+                    'Rs. ' + money(point.value),
+                    point.x,
+                    point.y - 12
+                );
+
+            }
+
+        });
+
     }
 
-    const canvas = document.getElementById('pieCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    points.forEach((point, index) => {
 
-    const centerX = 100;
-    const centerY = 100;
+        ctx.font = '600 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#64748b';
+
+        ctx.fillText(
+            labels[index],
+            point.x,
+            height - 20
+        );
+
+    });
+
+}
+
+
+/* PIE CHART */
+
+function drawPie(canvasId, emptyId, legendId, totalId, data, type){
+
+    const canvas = document.getElementById(canvasId);
+    const empty = document.getElementById(emptyId);
+    const legend = document.getElementById(legendId);
+
+    const totalBox = totalId
+        ? document.getElementById(totalId)
+        : null;
+
+    if(!canvas || !empty || !legend) return;
+
+    data = data || [];
+
+    const total = data.reduce(
+        (sum, item) => sum + Number(item.amount),
+        0
+    );
+
+    if(total <= 0){
+
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+
+        legend.innerHTML = '';
+
+        if(totalBox){
+
+            totalBox.innerHTML = `
+                <span>Total</span>
+                <strong>Rs. 0</strong>
+            `;
+
+        }
+
+        return;
+
+    }
+
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    const size = 230;
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+
+    const ctx = canvas.getContext('2d');
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.clearRect(0, 0, size, size);
+
+    const colors = [
+        '#2563eb',
+        '#16a34a',
+        '#f59e0b',
+        '#8b5cf6',
+        '#ef4444',
+        '#0891b2',
+        '#e11d48',
+        '#64748b'
+    ];
+
+    let highestIndex = 0;
+
+    data.forEach((item, index) => {
+
+        if(Number(item.amount) > Number(data[highestIndex].amount)){
+            highestIndex = index;
+        }
+
+    });
+
+    let start = -Math.PI / 2;
+
+    data.forEach((item, index) => {
+
+        const amount = Number(item.amount);
+        const slice = (amount / total) * Math.PI * 2;
+
+        let color = colors[index % colors.length];
+
+        if(type === 'expense' && index === highestIndex){
+            color = '#dc2626';
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(115, 115);
+
+        ctx.arc(
+            115,
+            115,
+            105,
+            start,
+            start + slice
+        );
+
+        ctx.closePath();
+
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        start += slice;
+
+    });
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 85, 0, 2 * Math.PI);
-    ctx.arc(centerX, centerY, 52, 0, 2 * Math.PI, true);
-    ctx.fillStyle = (type === 'Income') ? '#2563eb' : '#ef4444';
+    ctx.arc(115, 115, 58, 0, Math.PI * 2);
+
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
 
-    const listArea = document.getElementById('sourceListArea');
-    listArea.innerHTML = '<div style="font-size:13px; font-weight:900; color:#0f172a; margin-bottom:10px;">YOUR SAVED CATEGORIES</div>';
+    if(totalBox){
 
-    // यदि database बाट data आएको छ भने exact त्यही category (जस्तै xyz, pqr आदि) देखाउने
-    if(categoriesData && categoriesData.length > 0) {
-        const colorsList = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
-        
-        categoriesData.forEach((item, index) => {
-            let dotColor = colorsList[index % colorsList.length];
-            listArea.innerHTML += `
-                <div class="source-item">
-                    <div class="source-name">
-                        <div class="source-dot" style="background:${dotColor};"></div>
-                        <span>${item.name}</span>
-                    </div>
-                    <div class="source-val">Rs. ${Number(item.amount).toLocaleString()}</div>
-                </div>
-            `;
-        });
-    } else {
-        // यदि कुनै डेटा फेला परेको छैन भने total रकम देखाइदिने वा generic नाम देखाउने
-        let defaultName = (type === 'Income') ? 'Income Record' : 'Expense Record';
-        listArea.innerHTML += `
-            <div class="source-item">
-                <div class="source-name">
-                    <div class="source-dot" style="background:${(type === 'Income') ? '#2563eb' : '#ef4444'};"></div>
-                    <span>${defaultName}</span>
-                </div>
-                <div class="source-val">Rs. ${Number(totalVal).toLocaleString()}</div>
-            </div>
+        totalBox.innerHTML = `
+            <span>Total ${type === 'expense' ? 'Expense' : 'Income'}</span>
+            <strong>Rs. ${money(total)}</strong>
         `;
+
     }
+
+    legend.innerHTML = '';
+
+    data.forEach((item, index) => {
+
+        const percent = (Number(item.amount) / total) * 100;
+
+        let color = colors[index % colors.length];
+
+        if(type === 'expense' && index === highestIndex){
+            color = '#dc2626';
+        }
+
+        legend.innerHTML += `
+
+            <div class="legend-item ${type === 'expense' && index === highestIndex ? 'highest-item' : ''}">
+
+                <div class="legend-name">
+
+                    <span class="legend-dot" style="background:${color}"></span>
+
+                    <span>${escapeHtml(item.name)}</span>
+
+                </div>
+
+                <div class="legend-value">
+
+                    <strong>Rs. ${money(item.amount)}</strong>
+
+                    <small>${percent.toFixed(1)}%</small>
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
 }
 
-function closeFullModal() {
-    document.getElementById('fsModal').style.display = 'none';
+
+/* PERIOD BUTTONS */
+
+function setPeriodButton(selector, period){
+
+    const buttons = document.querySelectorAll(selector + ' button');
+
+    const indexMap = {
+        today: 0,
+        yesterday: 1,
+        month: 2,
+        year: 3
+    };
+
+    buttons.forEach(button => {
+        button.classList.remove('active');
+    });
+
+    if(buttons[indexMap[period]]){
+        buttons[indexMap[period]].classList.add('active');
+    }
+
 }
 
-drawBarChart();
-drawLineChart();
+
+/* INCOME PIE */
+
+function drawIncomePie(period){
+
+    const labels = {
+        today: 'Today',
+        yesterday: 'Yesterday',
+        month: 'This Month',
+        year: 'This Year'
+    };
+
+    document.getElementById('incomePiePeriod').innerText = labels[period];
+
+    drawPie(
+        'incomePieChart',
+        'incomePieEmpty',
+        'incomeLegend',
+        'incomeTotalBelow',
+        dashboardData.incomeCategories[period],
+        'income'
+    );
+
+}
+
+
+/* EXPENSE PIE */
+
+function drawExpensePie(period){
+
+    const labels = {
+        today: 'Today',
+        yesterday: 'Yesterday',
+        month: 'This Month',
+        year: 'This Year'
+    };
+
+    document.getElementById('expensePiePeriod').innerText = labels[period];
+
+    drawPie(
+        'expensePieChart',
+        'expensePieEmpty',
+        'expenseLegend',
+        'expenseTotalBelow',
+        dashboardData.expenseCategories[period],
+        'expense'
+    );
+
+}
+
+
+/* TRANSACTION DETAILS */
+
+function openDetails(type, period){
+
+    const labels = {
+        today: 'Today',
+        yesterday: 'Yesterday',
+        month: 'This Month',
+        year: 'This Year'
+    };
+
+    const title = type === 'income'
+        ? 'Income Details'
+        : 'Expense Details';
+
+    const records = dashboardData.transactions[type][period] || [];
+
+    const total = dashboardData[type][period] || 0;
+
+    const categories = type === 'income'
+        ? dashboardData.incomeCategories[period]
+        : dashboardData.expenseCategories[period];
+
+    document.getElementById('detailsModal').style.display = 'flex';
+
+    document.getElementById('modalTitle').innerText = title;
+
+    document.getElementById('modalSubtitle').innerText =
+        labels[period] + ' transactions';
+
+    document.getElementById('modalTotal').innerText =
+        'Rs. ' + money(total);
+
+    const icon = document.getElementById('modalIcon');
+
+    icon.innerHTML = type === 'income'
+        ? '<i class="fa-solid fa-arrow-trend-up"></i>'
+        : '<i class="fa-solid fa-arrow-trend-down"></i>';
+
+    icon.className = 'modal-icon ' + type;
+
+    drawPie(
+        'detailsPieChart',
+        'detailsPieEmpty',
+        'detailsPieLegend',
+        '',
+        categories,
+        type
+    );
+
+    const list = document.getElementById('transactionList');
+
+    if(records.length === 0){
+
+        list.innerHTML = `
+
+            <div class="empty-transactions">
+
+                <i class="fa-regular fa-folder-open"></i>
+
+                <strong>No ${type} records found</strong>
+
+                <span>No transaction was recorded for this period.</span>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    list.innerHTML = records.map(record => {
+
+        if(type === 'income'){
+
+            return `
+
+                <div class="transaction-row income-row">
+
+                    <div class="transaction-main">
+
+                        <div class="transaction-avatar income-avatar">
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </div>
+
+                        <div>
+                            <strong>${escapeHtml(record.source)}</strong>
+                            <span>${escapeHtml(record.category)}</span>
+                        </div>
+
+                    </div>
+
+                    <div class="transaction-info">
+
+                        <strong class="income-text">
+                            + Rs. ${money(record.amount)}
+                        </strong>
+
+                        <span>${escapeHtml(formatDate(record.date))}</span>
+
+                    </div>
+
+                    <div class="transaction-details">
+                        ${escapeHtml(record.details)}
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+        return `
+
+            <div class="transaction-row expense-row">
+
+                <div class="transaction-main">
+
+                    <div class="transaction-avatar expense-avatar">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </div>
+
+                    <div>
+                        <strong>${escapeHtml(record.item)}</strong>
+
+                        <span>
+                            ${escapeHtml(record.category)} ·
+                            ${escapeHtml(record.type)}
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="transaction-info">
+
+                    <strong class="expense-text">
+                        - Rs. ${money(record.amount)}
+                    </strong>
+
+                    <span>${escapeHtml(formatDate(record.date))}</span>
+
+                </div>
+
+                <div class="transaction-details">
+                    ${escapeHtml(record.details)}
+                </div>
+
+            </div>
+
+        `;
+
+    }).join('');
+
+}
+
+
+/* CLOSE MODAL */
+
+function closeDetails(){
+
+    document.getElementById('detailsModal').style.display = 'none';
+
+}
+
+
+/* DATE FORMAT */
+
+function formatDate(dateString){
+
+    const date = new Date(dateString + 'T00:00:00');
+
+    return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+
+}
+
+
+/* ESCAPE HTML */
+
+function escapeHtml(value){
+
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+}
+
+
+/* MODAL OUTSIDE CLICK */
+
+window.addEventListener('click', function(event){
+
+    const modal = document.getElementById('detailsModal');
+
+    if(event.target === modal){
+        closeDetails();
+    }
+
+});
+
+
+/* ESC KEY TO CLOSE MODAL */
+
+window.addEventListener('keydown', function(event){
+
+    if(event.key === 'Escape'){
+        closeDetails();
+    }
+
+});
+
+
+/* REDRAW CHARTS */
+
+function redrawCharts(){
+
+    drawTrend(
+        'incomeTrendChart',
+        [
+            dashboardData.income.today,
+            dashboardData.income.yesterday,
+            dashboardData.income.month,
+            dashboardData.income.year
+        ],
+        ['Today', 'Yesterday', 'Month', 'Year'],
+        '#16a34a'
+    );
+
+    drawTrend(
+        'expenseTrendChart',
+        [
+            dashboardData.expense.today,
+            dashboardData.expense.yesterday,
+            dashboardData.expense.month,
+            dashboardData.expense.year
+        ],
+        ['Today', 'Yesterday', 'Month', 'Year'],
+        '#ef4444'
+    );
+
+    drawIncomePie('month');
+    drawExpensePie('month');
+
+}
+
+
+/* PAGE LOAD */
+
+window.addEventListener('load', function(){
+
+    redrawCharts();
+
+});
+
+
+/* WINDOW RESIZE */
+
+window.addEventListener('resize', function(){
+
+    redrawCharts();
+
+});
+
 </script>
+
+<?php include('footer.php'); ?>
