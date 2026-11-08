@@ -1,104 +1,202 @@
 <?php
 include('header.php');
+include('smtp_mailer.php');
 
 $msg = "";
 $email = "";
 
-if(isset($_POST['submit'])){
+// Gmail SMTP settings.
+// Enter your NEW Gmail App Password here.
+$gmailAddress = "missbeastya@gmail.com";
+$appPassword = "sefe ppvf pncu plwe";
 
-    $email = get_safe_value($_POST['email']);
+if (isset($_POST['submit'])) {
 
-    $res = mysqli_query($con,
-        "select * from users where email='$email'"
-    );
+    $email = strtolower(trim($_POST['email']));
 
-    if(mysqli_num_rows($res) == 0){
+    // Validate email address.
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
-        $msg = "Email not found";
+        $msg = "Please enter a valid email address.";
 
-    }else{
+    } elseif (strtolower(substr(strrchr($email, "@"), 1)) !== "gmail.com") {
 
-        /*
-        Temporary password reset system.
-        User will be given a new temporary password.
-        */
+        $msg = "Please enter a valid Gmail address.";
 
-        $new_password = "12345678";
+    } else {
 
-        $password = password_hash(
-            $new_password,
-            PASSWORD_DEFAULT
+        // Clear previous password reset session.
+        unset(
+            $_SESSION['reset_otp_hash'],
+            $_SESSION['reset_otp_email'],
+            $_SESSION['reset_otp_expiry'],
+            $_SESSION['reset_otp_verified'],
+            $_SESSION['reset_otp_attempts']
         );
 
-        mysqli_query($con,
-            "update users set password='$password'
-             where email='$email'"
+        // Check whether email is registered.
+        $stmt = mysqli_prepare(
+            $con,
+            "SELECT id FROM users WHERE email = ? LIMIT 1"
         );
 
-        $msg = "Password reset successful. Your new password is: 12345678";
+        if ($stmt) {
+
+            mysqli_stmt_bind_param($stmt, "s", $email);
+
+            if (mysqli_stmt_execute($stmt)) {
+
+                mysqli_stmt_store_result($stmt);
+
+                if (mysqli_stmt_num_rows($stmt) == 0) {
+
+                    $msg = "This email is not registered.";
+
+                } else {
+
+                    // Generate six-digit OTP.
+                    $otp = (string) random_int(100000, 999999);
+
+                    $errorMessage = "";
+
+                    // Send OTP to registered Gmail.
+                    $sent = sendOtpEmail(
+                        $email,
+                        $otp,
+                        $gmailAddress,
+                        $appPassword,
+                        $errorMessage
+                    );
+
+                    if ($sent) {
+
+                        // Regenerate session ID.
+                        session_regenerate_id(true);
+
+                        // Store hashed OTP.
+                        $_SESSION['reset_otp_hash'] = password_hash(
+                            $otp,
+                            PASSWORD_DEFAULT
+                        );
+
+                        $_SESSION['reset_otp_email'] = $email;
+
+                        // OTP expires after 50 seconds.
+                        $_SESSION['reset_otp_expiry'] = time() + 50;
+
+                        $_SESSION['reset_otp_verified'] = false;
+
+                        $_SESSION['reset_otp_attempts'] = 0;
+
+                        // Go to OTP verification page.
+                        redirect('verify_otp.php');
+                        exit;
+
+                    } else {
+
+                        $msg = "OTP could not be sent. Please check Gmail SMTP settings.";
+
+                    }
+                }
+
+            } else {
+
+                $msg = "Database error. Please try again.";
+
+            }
+
+            mysqli_stmt_close($stmt);
+
+        } else {
+
+            $msg = "Database connection error.";
+
+        }
     }
 }
 ?>
 
 <style>
 
-.forgot-box{
-    width:420px;
-    max-width:95%;
-    margin:50px auto;
-    background:#fff;
-    padding:25px;
-    border-radius:10px;
-    box-shadow:0 5px 15px rgba(0,0,0,.15);
+.forgot-box {
+    width: 420px;
+    max-width: 95%;
+    margin: 50px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.12);
+    box-sizing: border-box;
 }
 
-.forgot-box h2{
-    text-align:center;
-    margin-bottom:25px;
+.forgot-box h2 {
+    text-align: center;
+    margin-bottom: 12px;
+    color: #222;
 }
 
-.forgot-box label{
-    display:block;
-    font-weight:bold;
-    margin-bottom:7px;
+.forgot-box p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 22px;
+    line-height: 1.6;
 }
 
-.forgot-box input[type=email]{
-    width:100%;
-    padding:12px;
-    border:1px solid #ccc;
-    border-radius:7px;
-    box-sizing:border-box;
-    font-size:16px;
+.forgot-box label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
 }
 
-.forgot-btn{
-    width:100%;
-    margin-top:20px;
-    padding:12px;
-    background:#0d6efd;
-    color:#fff;
-    border:none;
-    border-radius:7px;
-    font-size:16px;
-    cursor:pointer;
+.forgot-box input[type=email] {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    outline: none;
 }
 
-.forgot-btn:hover{
-    background:#0b5ed7;
+.forgot-box input[type=email]:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13,110,253,.10);
 }
 
-.msg{
-    margin-top:15px;
-    text-align:center;
-    color:green;
-    font-weight:bold;
+.forgot-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 13px;
+    background: #0d6efd;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
-.back{
-    display:block;
-    text-align:center;
-    margin-top:20px;
+.forgot-btn:hover {
+    background: #0b5ed7;
+}
+
+.msg {
+    margin-top: 15px;
+    text-align: center;
+    color: #d93025;
+    font-weight: bold;
+}
+
+.back {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.back:hover {
+    text-decoration: underline;
 }
 
 </style>
@@ -107,36 +205,39 @@ if(isset($_POST['submit'])){
 
     <h2>🔐 Forgot Password</h2>
 
+    <p>
+        Enter your registered Gmail address.
+        We will send you a password reset OTP.
+    </p>
+
     <form method="post">
 
-        <label>Gmail</label>
+        <label>Registered Gmail</label>
 
         <input
             type="email"
             name="email"
             required
             placeholder="Enter your registered Gmail"
-            value="<?php echo $email; ?>"
+            value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>"
         >
 
         <input
             type="submit"
             name="submit"
-            value="Reset Password"
+            value="Send OTP"
             class="forgot-btn"
         >
 
     </form>
 
-    <?php
-    if($msg!=""){
-    ?>
+    <?php if ($msg != "") { ?>
+
         <div class="msg">
-            <?php echo $msg; ?>
+            <?php echo htmlspecialchars($msg, ENT_QUOTES, 'UTF-8'); ?>
         </div>
-    <?php
-    }
-    ?>
+
+    <?php } ?>
 
     <a href="index.php" class="back">
         ← Back to Login
