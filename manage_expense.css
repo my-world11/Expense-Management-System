@@ -1,0 +1,290 @@
+* {
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.expense-form-page {
+    padding: 30px 20px;
+    background-color: #f1f4f8;
+    min-height: 100vh;
+}
+
+.form-box {
+    width: 650px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Header */
+.form-header h2 {
+    font-size: 32px;
+    color: #0d1b2a;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+}
+
+.form-header p {
+    color: #5d6b7c;
+    font-size: 15px;
+    margin: 0 0 8px 0;
+}
+
+.back-link {
+    display: inline-block;
+    color: #1d68a6;
+    font-size: 14px;
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 18px;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* Card Sections */
+.form-card {
+    background: #ffffff;
+    border: 1px solid #d0dce7;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2b3a4a;
+    margin-bottom: 8px;
+}
+
+/* Base Inputs */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    border: 1.5px solid #a4bccc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #222;
+    background: #ffffff;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #00768e;
+    box-shadow: 0 0 0 3px rgba(0, 118, 142, 0.12);
+}
+
+/* Select Box */
+.select-wrapper {
+    position: relative;
+}
+
+.select-wrapper select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.select-wrapper::after {
+    content: "⌵";
+    position: absolute;
+    right: 14px;
+    top: 40%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1c3d52;
+}
+
+/* Need / Want Pill Buttons */
+.type-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.type-pill {
+    position: relative;
+    cursor: pointer;
+}
+
+.type-pill input {
+    position: absolute;
+    opacity: 0;
+}
+
+.pill-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 25px;
+    border: 1.5px solid #c8d6e3;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.pill-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.pill-desc {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Active Need Pill */
+.need-pill input:checked + .pill-body {
+    background: #c2e5cc;
+    border-color: #72c186;
+}
+
+.need-pill input:checked + .pill-body .pill-title,
+.need-pill input:checked + .pill-body .pill-desc {
+    color: #124d20;
+}
+
+/* Active Want Pill */
+.want-pill input:checked + .pill-body {
+    background: #fde2b3;
+    border-color: #f2ba63;
+}
+
+.want-pill input:checked + .pill-body .pill-title,
+.want-pill input:checked + .pill-body .pill-desc {
+    color: #6d4e00;
+}
+
+/* 2 Column Layout (Item & Price) */
+.form-row-2col {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 14px;
+}
+
+/* Item Field Icon */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon .left-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+}
+
+.input-with-icon input {
+    padding-left: 36px;
+}
+
+/* Price Box */
+.price-input-box {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid #a4bccc;
+    border-radius: 10px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.price-input-box .currency-tag {
+    padding: 10px 12px;
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.price-input-box input {
+    border: none;
+    background: #f6f8fa;
+    border-radius: 0;
+}
+
+.price-input-box input:focus {
+    box-shadow: none;
+    background: #ffffff;
+}
+
+/* Textarea */
+textarea {
+    resize: vertical;
+    min-height: 65px;
+}
+
+/* Custom Date Box */
+.date-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.date-input-wrapper .cal-icon {
+    position: absolute;
+    left: 12px;
+    pointer-events: none;
+}
+
+.date-input-wrapper .arrow-icon {
+    position: absolute;
+    right: 14px;
+    pointer-events: none;
+    font-size: 18px;
+    color: #555;
+}
+
+.date-input-wrapper input {
+    padding-left: 36px;
+    padding-right: 30px;
+}
+
+/* Submit Button */
+.submit-btn {
+    background: #008080;
+    color: #ffffff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 6px;
+}
+
+.submit-btn:hover {
+    background: #006666;
+}
+
+.form-error {
+    color: #d9534f;
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+@media(max-width: 580px) {
+    .form-row-2col {
+        grid-template-columns: 1fr;
+    }
+}

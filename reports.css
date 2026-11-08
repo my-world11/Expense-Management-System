@@ -1,0 +1,264 @@
+/* MAIN PAGE STYLES */
+.reports-page-wrapper {
+    width: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f8fafc;
+}
+
+/* HEADER */
+.reports-top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-icon-box {
+    width: 40px;
+    height: 40px;
+    background: #eff6ff;
+    color: #2563eb;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.title-with-icon h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.title-with-icon p {
+    margin: 2px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.header-date-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* FILTER CARD */
+.reports-filter-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.filter-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-card-title i {
+    color: #2563eb;
+}
+
+.filter-grid-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.form-group-item {
+    flex: 1;
+    min-width: 160px;
+}
+
+.form-group-item label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.form-group-item input,
+.select-dropdown-wrap select {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 13px;
+    color: #334155;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.form-actions-btn {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-search-action, .btn-reset-action {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-search-action {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+.btn-reset-action {
+    background-color: #10b981;
+    color: #ffffff;
+}
+
+/* TABLE UI */
+.reports-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.custom-reports-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.custom-reports-table thead th {
+    background-color: #f0f7ff;
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.custom-reports-table tbody td {
+    padding: 14px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.item-title {
+    color: #334155;
+}
+
+.date-text {
+    color: #64748b;
+}
+
+.price-text {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.text-right-align {
+    text-align: right !important;
+}
+
+/* CATEGORY PILL BADGES */
+.category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.category-pill i {
+    font-size: 7px;
+}
+
+.pill-electronics {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+}
+
+.pill-shopping {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.pill-food {
+    background-color: #ffedd5;
+    color: #c2410c;
+}
+
+.pill-entertainment {
+    background-color: #ffe4e6;
+    color: #be123c;
+}
+
+.pill-default {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+/* FOOTER TOTAL BOX (Exact Image Match) */
+.custom-reports-table tfoot tr {
+    background-color: #ffffff;
+}
+
+.footer-total-label {
+    padding: 16px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: left !important;
+    border-top: 1px solid #e2e8f0;
+}
+
+.footer-total-box {
+    padding: 16px 20px;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom-right-radius: 12px;
+}
+
+/* EMPTY STATE */
+.empty-data-wrapper {
+    padding: 40px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 36px;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+}

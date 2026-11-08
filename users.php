@@ -1,4 +1,4 @@
-```php
+
 <?php
 
 ob_start();
@@ -8,1462 +8,763 @@ include('header.php');
 checkUser();
 adminArea();
 
-
-/*
-==================================================
-AUTO ACTIVATE SUSPENDED USERS AFTER 20 DAYS
-==================================================
-*/
-
-mysqli_query(
-    $con,
-    "UPDATE users
-     SET status='Active',
-         suspend_until=NULL
-     WHERE role='User'
-     AND status='Suspended'
-     AND suspend_until IS NOT NULL
-     AND suspend_until <= CURDATE()"
-);
-
-
-/*
-==================================================
-SUSPEND USER
-==================================================
-*/
-
-if (
-    isset($_GET['type']) &&
-    $_GET['type'] == 'suspend' &&
-    isset($_GET['id']) &&
-    (int)$_GET['id'] > 0
-) {
-
-    $id = (int)$_GET['id'];
-
-    /*
-    20 DAYS SUSPENSION
-    */
-
-    $suspend_until = date(
-        'Y-m-d',
-        strtotime('+20 days')
-    );
-
-
-    /*
-    CHECK USER
-    */
-
-    $check_user = mysqli_query(
-        $con,
-        "SELECT id, username, role
-         FROM users
-         WHERE id='$id'
-         AND role='User'"
-    );
-
-
-    if (!$check_user) {
-
-        die(
-            "User Check Error: " .
-            mysqli_error($con)
-        );
-
-    }
-
-
-    if (mysqli_num_rows($check_user) == 0) {
-
-        die("User not found.");
-
-    }
-
-
-    /*
-    SUSPEND EXACT USER
-    */
-
-    $query = mysqli_query(
-        $con,
-        "UPDATE users
-         SET status='Suspended',
-             suspend_until='$suspend_until'
-         WHERE id='$id'
-         AND role='User'"
-    );
-
-
-    if (!$query) {
-
-        die(
-            "Suspend Error: " .
-            mysqli_error($con)
-        );
-
-    }
-
-
-    header("Location: users.php?suspend=1");
-
-    exit;
-}
-
-
-/*
-==================================================
-ACTIVATE USER
-==================================================
-*/
-
-if (
-    isset($_GET['type']) &&
-    $_GET['type'] == 'active' &&
-    isset($_GET['id']) &&
-    (int)$_GET['id'] > 0
-) {
-
-    $id = (int)$_GET['id'];
-
-
-    $query = mysqli_query(
-        $con,
-        "UPDATE users
-         SET status='Active',
-             suspend_until=NULL
-         WHERE id='$id'
-         AND role='User'"
-    );
-
-
-    if (!$query) {
-
-        die(
-            "Activate Error: " .
-            mysqli_error($con)
-        );
-
-    }
-
-
-    header("Location: users.php?activate=1");
-
-    exit;
-}
-
-
-/*
-==================================================
-SEARCH
-==================================================
-*/
-
 $search = "";
 
-
-if (
-    isset($_GET['search']) &&
-    $_GET['search'] != ""
-) {
-
-    $search = get_safe_value(
-        $_GET['search']
-    );
-
+if(isset($_GET['search']) && $_GET['search'] != ""){
+    $search = get_safe_value($_GET['search']);
 }
-
-
-/*
-==================================================
-NORMAL USERS
-ACTIVE USERS ONLY
-
-Inactive is only display based on last login.
-It is NOT database suspension.
-==================================================
-*/
 
 $sql_normal = "
     SELECT *
     FROM users
     WHERE role='User'
-    AND (
-        status='Active'
-        OR status IS NULL
-        OR status=''
-    )
 ";
 
-
-if ($search != "") {
-
+if($search != ""){
     $sql_normal .= "
         AND username LIKE '%$search%'
     ";
-
 }
-
 
 $sql_normal .= " ORDER BY id DESC";
 
+$res_normal = mysqli_query($con, $sql_normal);
 
-$res_normal = mysqli_query(
-    $con,
-    $sql_normal
-);
-
-
-if (!$res_normal) {
-
-    die(
-        "Normal User Error: " .
-        mysqli_error($con)
-    );
-
+if(!$res_normal){
+    die("User Error: " . mysqli_error($con));
 }
-
-
-/*
-==================================================
-SUSPENDED USERS
-==================================================
-*/
-
-$sql_suspend = "
-    SELECT *
-    FROM users
-    WHERE role='User'
-    AND status='Suspended'
-    AND suspend_until IS NOT NULL
-    AND suspend_until > CURDATE()
-";
-
-
-if ($search != "") {
-
-    $sql_suspend .= "
-        AND username LIKE '%$search%'
-    ";
-
-}
-
-
-$sql_suspend .= " ORDER BY id DESC";
-
-
-$res_suspend = mysqli_query(
-    $con,
-    $sql_suspend
-);
-
-
-if (!$res_suspend) {
-
-    die(
-        "Suspended User Error: " .
-        mysqli_error($con)
-    );
-
-}
-
 
 include('user_header.php');
 
 ?>
 
-
 <style>
 
-/* =========================================
-   CONTAINER
-========================================= */
-
-.container{
-
-    margin-left:230px;
-
-    width:calc(100% - 230px);
-
-    padding:25px;
-
-    box-sizing:border-box;
-
+/* Main page frame - matches Admin Dashboard */
+.users-page {
+    width: 100%;
+    max-width: 1250px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 30px 25px;
+    box-sizing: border-box;
+    background: #f5f7fb;
+    font-family: Arial, sans-serif;
 }
 
-
-/* =========================================
-   TITLE
-========================================= */
-
-.title{
-
-    font-size:28px;
-
-    font-weight:700;
-
-    color:#263238;
-
-    margin-bottom:20px;
-
+/* Header card */
+.users-header-card {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 28px 30px;
+    box-sizing: border-box;
+    box-shadow: 0 3px 14px rgba(30,80,140,0.07);
+    border: 1px solid #e7ebf2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
 }
 
-
-/* =========================================
-   TOP
-========================================= */
-
-.top{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:28px;
-
-    gap:15px;
-
-    flex-wrap:wrap;
-
+/* Title */
+.users-title-area {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+    min-width: 0;
 }
 
-
-/* =========================================
-   BUTTON
-========================================= */
-
-.btn{
-
-    padding:10px 17px;
-
-    text-decoration:none;
-
-    border-radius:5px;
-
-    color:white;
-
-    font-size:15px;
-
-    font-weight:600;
-
+.users-title-icon {
+    width: 62px;
+    height: 62px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: #eaf1ff;
+    color: #2864d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 27px;
 }
 
-
-.add{
-
-    background:#198754;
-
+.users-title-text h1 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 27px;
+    font-weight: 700;
 }
 
-
-.add:hover{
-
-    background:#157347;
-
-    color:white;
-
+.users-title-text p {
+    margin: 7px 0 0;
+    color: #788397;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
-
-/* =========================================
-   SEARCH
-========================================= */
-
-.search{
-
-    padding:10px 12px;
-
-    width:220px;
-
-    border:1px solid #ccc;
-
-    border-radius:5px;
-
-    font-size:15px;
-
-    outline:none;
-
+/* Top actions */
+.users-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-
-.search:focus{
-
-    border-color:#0d6efd;
-
+/* Search */
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-
-/* =========================================
-   SECTION TITLE
-========================================= */
-
-.section-title{
-
-    font-size:22px;
-
-    font-weight:700;
-
-    color:#263238;
-
-    margin-bottom:15px;
-
-    margin-top:10px;
-
+.search {
+    width: 230px;
+    height: 42px;
+    box-sizing: border-box;
+    padding: 0 13px;
+    border: 1px solid #dce2eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #263d59;
+    font-size: 13px;
+    outline: none;
 }
 
-
-.section-title i{
-
-    margin-right:8px;
-
+.search:focus {
+    border-color: #3975e8;
+    box-shadow: 0 0 0 3px rgba(57,117,232,0.10);
 }
 
-
-/* =========================================
-   SUSPENDED SECTION
-========================================= */
-
-.suspended-section{
-
-    margin-top:38px;
-
+.search-btn,
+.add-user {
+    height: 42px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: 0.2s;
+    white-space: nowrap;
 }
 
-
-/* =========================================
-   TABLE BOX
-========================================= */
-
-.table-box{
-
-    width:100%;
-
-    overflow-x:auto;
-
-    margin-bottom:20px;
-
+.search-btn {
+    background: #2864d9;
 }
 
-
-/* =========================================
-   TABLE
-========================================= */
-
-.user-table{
-
-    width:100%;
-
-    border-collapse:collapse;
-
-    background:white;
-
-    font-size:16px;
-
+.search-btn:hover {
+    background: #1e50b5;
 }
 
-
-.user-table th{
-
-    background:#0d6efd;
-
-    color:white;
-
-    padding:13px 10px;
-
-    font-size:17px;
-
-    font-weight:600;
-
-    text-align:center;
-
-    border:1px solid #ddd;
-
+.add-user {
+    background: #16a36a;
 }
 
-
-.user-table td{
-
-    border:1px solid #ddd;
-
-    padding:12px 10px;
-
-    text-align:center;
-
-    vertical-align:middle;
-
-    height:55px;
-
+.add-user:hover {
+    background: #118455;
+    color: white;
 }
 
-
-.user-table tr:hover{
-
-    background:#f7f9fc;
-
+/* Users card */
+.users-card {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e7ebf2;
+    border-radius: 14px;
+    padding: 25px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(30,50,80,0.05);
 }
 
-
-/* =========================================
-   ACTION
-========================================= */
-
-.action{
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    gap:18px;
-
-    white-space:nowrap;
-
+/* Card header */
+.users-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #edf0f5;
 }
 
-
-.edit{
-
-    color:#0d6efd;
-
-    text-decoration:none;
-
-    font-weight:600;
-
+.users-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-
-.edit:hover{
-
-    color:#084298;
-
+.users-card-title-icon {
+    color: #2864d9;
+    font-size: 20px;
 }
 
-
-.suspend{
-
-    color:#dc3545;
-
-    text-decoration:none;
-
-    font-weight:600;
-
+.users-card-title h2 {
+    margin: 0;
+    font-size: 21px;
+    color: #263247;
+    font-weight: 700;
 }
 
-
-.suspend:hover{
-
-    color:#bb2d3b;
-
+.user-count {
+    background: #eaf1ff;
+    color: #2864d9;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
-
-.active{
-
-    color:#198754;
-
-    text-decoration:none;
-
-    font-weight:600;
-
+/* Table */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e8edf4;
+    border-radius: 9px;
 }
 
-
-.active:hover{
-
-    color:#146c43;
-
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    min-width: 750px;
 }
 
-
-/* =========================================
-   STATUS
-========================================= */
-
-.status-active{
-
-    color:#198754;
-
-    font-weight:600;
-
-    display:inline-flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    gap:3px;
-
+.user-table th {
+    background: #f5f7fb;
+    color: #647087;
+    padding: 14px 15px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 1px solid #e8edf4;
+    white-space: nowrap;
 }
 
-
-.status-inactive{
-
-    color:#fd7e14;
-
-    font-weight:600;
-
-    display:inline-flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    gap:3px;
-
+.user-table th i {
+    margin-right: 5px;
 }
 
-
-.status-suspend{
-
-    color:#dc3545;
-
-    font-weight:600;
-
-    display:inline-flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    gap:3px;
-
+.user-table td {
+    padding: 15px;
+    color: #475569;
+    font-size: 13px;
+    border-bottom: 1px solid #edf0f5;
+    vertical-align: middle;
 }
 
-
-.status-active i,
-.status-inactive i,
-.status-suspend i{
-
-    font-size:20px;
-
+.user-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
-
-/* =========================================
-   SUSPEND UNTIL
-========================================= */
-
-.suspend-date{
-
-    color:#dc3545;
-
-    font-weight:600;
-
+.user-table tbody tr:hover {
+    background: #f9fbff;
 }
 
-
-/* =========================================
-   REMAINING
-========================================= */
-
-.remaining{
-
-    color:#dc3545;
-
-    font-weight:600;
-
-    line-height:1.5;
-
+/* Serial number */
+.id-cell {
+    color: #8792a5 !important;
+    font-weight: 600;
+    width: 55px;
 }
 
-
-.remaining-small{
-
-    font-size:13px;
-
-    color:#777;
-
-    display:block;
-
+/* Username */
+.username-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #263247;
+    font-weight: 600;
 }
 
-
-/* =========================================
-   INFO
-========================================= */
-
-.suspend-info{
-
-    background:#fff5f5;
-
-    border:1px solid #f1b0b7;
-
-    color:#842029;
-
-    padding:15px;
-
-    border-radius:6px;
-
-    margin-top:10px;
-
-    margin-bottom:20px;
-
+.username-icon {
+    width: 29px;
+    height: 29px;
+    flex-shrink: 0;
+    border-radius: 7px;
+    background: #eaf1ff;
+    color: #2864d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
 }
 
-
-/* =========================================
-   MESSAGE
-========================================= */
-
-.success-message{
-
-    background:#d1e7dd;
-
-    color:#0f5132;
-
-    padding:12px 18px;
-
-    border:1px solid #badbcc;
-
-    border-radius:6px;
-
-    margin-bottom:20px;
-
-    font-weight:600;
-
+/* Email and login */
+.email-cell {
+    color: #647087;
+    word-break: break-word;
 }
 
-
-.activate-message{
-
-    background:#cfe2ff;
-
-    color:#084298;
-
-    padding:12px 18px;
-
-    border:1px solid #9ec5fe;
-
-    border-radius:6px;
-
-    margin-bottom:20px;
-
+.login-cell {
+    color: #647087;
+    white-space: nowrap;
 }
 
-
-/* =========================================
-   NO DATA
-========================================= */
-
-.no-data{
-
-    background:white;
-
-    border:1px solid #ddd;
-
-    padding:40px;
-
-    text-align:center;
-
-    font-size:19px;
-
-    color:#777;
-
+.login-cell i {
+    color: #8490a3;
+    margin-right: 5px;
 }
 
+.never-login {
+    color: #8490a3;
+}
 
-/* =========================================
-   RESPONSIVE
-========================================= */
+/* Status */
+.status-active,
+.status-inactive {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
 
-@media(max-width:900px){
+.status-active {
+    color: #128052;
+    background: #e7f8ef;
+}
 
-    .container{
+.status-inactive {
+    color: #a66a12;
+    background: #fff4df;
+}
 
-        margin-left:0;
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: block;
+}
 
-        width:100%;
+.status-active .status-dot {
+    background: #18a874;
+}
 
-        padding:15px;
+.status-inactive .status-dot {
+    background: #f28a16;
+}
 
+/* Edit button */
+.edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 13px;
+    border-radius: 7px;
+    background: #eaf1ff;
+    color: #2864d9;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #d5e2fa;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.edit-btn:hover {
+    background: #2864d9;
+    color: white;
+    border-color: #2864d9;
+}
+
+/* Information box */
+.info-box {
+    margin-top: 22px;
+    padding: 15px 18px;
+    background: #eef6ff;
+    border: 1px solid #d5e5fa;
+    border-radius: 9px;
+    color: #34577e;
+    font-size: 13px;
+    line-height: 1.7;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.info-icon {
+    color: #2864d9;
+    font-size: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.info-box strong {
+    color: #1e4778;
+}
+
+/* No data */
+.no-data {
+    padding: 45px 20px;
+    text-align: center;
+    color: #8490a3;
+}
+
+.no-data-icon {
+    width: 55px;
+    height: 55px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: #eef6ff;
+    color: #2864d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.no-data h3 {
+    margin: 0 0 7px;
+    color: #344258;
+    font-size: 17px;
+}
+
+.no-data p {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* Tablet */
+@media(max-width: 1100px) {
+    .users-header-card {
+        flex-direction: column;
+        align-items: stretch;
     }
 
+    .users-top-actions {
+        justify-content: space-between;
+    }
+}
 
-    .table-box{
-
-        overflow-x:auto;
-
+/* Dashboard responsive spacing */
+@media(max-width: 768px) {
+    .users-page {
+        padding: 20px 15px;
     }
 
-
-    .user-table{
-
-        min-width:1000px;
-
+    .users-header-card {
+        padding: 22px;
+        margin-bottom: 20px;
     }
 
+    .users-title-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 24px;
+    }
+
+    .users-title-text h1 {
+        font-size: 23px;
+    }
+
+    .users-card {
+        padding: 18px;
+    }
+
+    .users-card-title h2 {
+        font-size: 19px;
+    }
+}
+
+/* Small mobile */
+@media(max-width: 420px) {
+    .users-page {
+        padding: 15px 10px;
+    }
+
+    .users-header-card {
+        padding: 18px;
+    }
+
+    .users-title-area {
+        gap: 12px;
+    }
+
+    .users-title-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 21px;
+    }
+
+    .users-title-text h1 {
+        font-size: 20px;
+    }
+
+    .users-title-text p {
+        font-size: 12px;
+    }
+
+    .users-top-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-form {
+        width: 100%;
+    }
+
+    .search-wrapper {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .search {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .search-btn {
+        flex-shrink: 0;
+        padding: 0 10px;
+    }
+
+    .add-user {
+        width: 100%;
+    }
+
+    .users-card {
+        padding: 15px;
+    }
+
+    .users-card-title h2 {
+        font-size: 17px;
+    }
+
+    .info-box {
+        font-size: 12px;
+        padding: 13px;
+    }
 }
 
 </style>
 
+<div class="users-page">
 
-<div class="container">
+    <div class="users-header-card">
 
+        <div class="users-title-area">
 
-<!-- =========================================
-     PAGE TITLE
-========================================= -->
+            <div class="users-title-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
 
-<div class="title">
+            <div class="users-title-text">
+                <h1>Users Management</h1>
+                <p>Manage your system users and their account information.</p>
+            </div>
 
-    <i class="fa-solid fa-users"></i>
+        </div>
 
-    Users Management
+        <div class="users-top-actions">
 
-</div>
+            <a href="manage_user.php" class="add-user">
+                <i class="fa-solid fa-user-plus"></i>
+                Add User
+            </a>
 
+            <form method="get" class="search-form">
 
-<!-- =========================================
-     SUCCESS MESSAGE
-========================================= -->
+                <div class="search-wrapper">
+                    <input
+                        type="text"
+                        name="search"
+                        class="search"
+                        placeholder="Search Username..."
+                        value="<?php echo htmlspecialchars($search); ?>"
+                    >
+                </div>
 
-<?php
+                <button type="submit" class="search-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Search
+                </button>
 
-if(isset($_GET['suspend'])){
+            </form>
 
-?>
+        </div>
 
-<div class="success-message">
+    </div>
 
-    <i class="fa-solid fa-circle-check"></i>
+    <div class="users-card">
 
-    User suspended successfully and added to
-    Suspended Users list.
+        <div class="users-card-header">
 
-</div>
+            <div class="users-card-title">
+                <span class="users-card-title-icon">
+                    <i class="fa-solid fa-users"></i>
+                </span>
+                <h2>Users</h2>
+            </div>
 
-<?php
+            <div class="user-count">
+                <?php echo mysqli_num_rows($res_normal); ?>
+                <?php echo (mysqli_num_rows($res_normal) == 1 ? ' User' : ' Users'); ?>
+            </div>
 
-}
+        </div>
 
+        <?php if(mysqli_num_rows($res_normal) > 0){ ?>
 
-if(isset($_GET['activate'])){
+            <div class="table-wrapper">
 
-?>
+                <table class="user-table">
 
-<div class="activate-message">
+                    <thead>
+                        <tr>
+                            <th> ID</th>
+                            <th><i class="fa-solid fa-user"></i> Username</th>
+                            <th><i class="fa-solid fa-envelope"></i> Email</th>
+                            <th><i class="fa-regular fa-calendar"></i> Last Login</th>
+                            <th><i class="fa-solid fa-shield-halved"></i> Status</th>
+                            <th><i class="fa-solid fa-gear"></i> Action</th>
+                        </tr>
+                    </thead>
 
-    <i class="fa-solid fa-circle-check"></i>
+                    <tbody>
 
-    User activated successfully and added to
-    Users list.
+                        <?php $i = 1; ?>
 
-</div>
+                        <?php while($row = mysqli_fetch_assoc($res_normal)){ ?>
 
-<?php
+                            <tr>
 
-}
+                                <td class="id-cell">
+                                    <?php echo $i++; ?>
+                                </td>
 
-?>
+                                <td>
+                                    <div class="username-cell">
+                                        <span class="username-icon">
+                                            <i class="fa-solid fa-user"></i>
+                                        </span>
 
+                                        <?php echo htmlspecialchars($row['username']); ?>
+                                    </div>
+                                </td>
 
-<!-- =========================================
-     TOP
-========================================= -->
+                                <td class="email-cell">
+                                    <?php echo htmlspecialchars($row['email']); ?>
+                                </td>
 
-<div class="top">
+                                <td class="login-cell">
 
+                                    <?php if(!empty($row['last_login'])){ ?>
 
-<a
-    href="manage_user.php"
-    class="btn add"
->
+                                        <i class="fa-regular fa-clock"></i>
 
-    <i class="fa-solid fa-user-plus"></i>
+                                        <?php
+                                        echo date(
+                                            'd-m-Y h:i A',
+                                            strtotime($row['last_login'])
+                                        );
+                                        ?>
 
-    Add User
+                                    <?php }else{ ?>
 
-</a>
+                                        <span class="never-login">
+                                            <i class="fa-regular fa-clock"></i>
+                                            Never Login
+                                        </span>
 
+                                    <?php } ?>
 
-<form method="get">
+                                </td>
 
-    <input
-        type="text"
-        name="search"
-        class="search"
-        placeholder="Search Username..."
-        value="<?php echo htmlspecialchars($search); ?>"
-    >
+                                <td>
 
-    <input
-        type="submit"
-        value="Search"
-    >
+                                    <?php
+                                    if(
+                                        !empty($row['last_login']) &&
+                                        strtotime($row['last_login']) >= strtotime('-7 days')
+                                    ){
+                                    ?>
 
-</form>
+                                        <span class="status-active">
+                                            <span class="status-dot"></span>
+                                            Active
+                                        </span>
 
+                                    <?php }else{ ?>
 
-</div>
+                                        <span class="status-inactive">
+                                            <span class="status-dot"></span>
+                                            Inactive
+                                        </span>
 
+                                    <?php } ?>
 
-<!-- =========================================
-     USERS
-========================================= -->
+                                </td>
 
-<div class="section-title">
+                                <td>
+                                    <a
+                                        class="edit-btn"
+                                        href="manage_user.php?id=<?php echo $row['id']; ?>"
+                                    >
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                        Edit
+                                    </a>
+                                </td>
 
-    <i class="fa-solid fa-users"></i>
+                            </tr>
 
-    Users
+                        <?php } ?>
 
-</div>
+                    </tbody>
 
+                </table>
 
-<?php
+            </div>
 
-if(mysqli_num_rows($res_normal)>0){
+            <div class="info-box">
 
-?>
+                <div class="info-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
 
+                <div>
+                    <strong>User Status:</strong>
+                    Active means the user has logged in within the last 7 days.
+                    Inactive means the user has not logged in for more than 7 days.
 
-<div class="table-box">
+                    <br>
 
-<table class="user-table">
+                    <strong>Note:</strong>
+                    Inactive status is only for display and does not prevent the user from logging in.
+                </div>
 
+            </div>
 
-<tr>
+        <?php }else{ ?>
 
-    <th>ID</th>
+            <div class="no-data">
 
-    <th>Username</th>
+                <div class="no-data-icon">
+                    <i class="fa-solid fa-users-slash"></i>
+                </div>
 
-    <th>Email</th>
+                <h3>No User Found</h3>
 
-    <th>Last Login</th>
+                <p>No users match your current search.</p>
 
-    <th>Status</th>
+            </div>
 
-    <th>Action</th>
+        <?php } ?>
 
-</tr>
-
-
-<?php
-
-while($row=mysqli_fetch_assoc($res_normal)){
-
-?>
-
-
-<tr>
-
-
-<td>
-
-    <?php echo $row['id']; ?>
-
-</td>
-
-
-<td>
-
-    <?php
-
-    echo htmlspecialchars(
-        $row['username']
-    );
-
-    ?>
-
-</td>
-
-
-<td>
-
-    <?php
-
-    echo htmlspecialchars(
-        $row['email']
-    );
-
-    ?>
-
-</td>
-
-
-<td>
-
-<?php
-
-if(
-    !empty($row['last_login'])
-){
-
-    echo date(
-        'd-m-Y h:i A',
-        strtotime($row['last_login'])
-    );
-
-}
-else{
-
-    echo "Never Login";
-
-}
-
-?>
-
-</td>
-
-
-<td>
-
-<?php
-
-/*
-==========================================
-DISPLAY ACTIVE / INACTIVE
-==========================================
-
-Inactive only means user has not logged in
-for more than 7 days.
-
-It does NOT block login.
-*/
-
-if(
-    !empty($row['last_login']) &&
-    strtotime($row['last_login']) >= strtotime('-7 days')
-){
-
-?>
-
-<span class="status-active">
-
-    <i class="fa-solid fa-circle-check"></i>
-
-    Active
-
-</span>
-
-<?php
-
-}
-else{
-
-?>
-
-<span class="status-inactive">
-
-    <i class="fa-solid fa-circle-xmark"></i>
-
-    Inactive
-
-</span>
-
-<?php
-
-}
-
-?>
-
-</td>
-
-
-<td>
-
-<div class="action">
-
-
-<a
-    class="edit"
-    href="manage_user.php?id=<?php echo $row['id']; ?>"
->
-
-    <i class="fa-solid fa-pen-to-square"></i>
-
-    Edit
-
-</a>
-
-
-<a
-    class="suspend"
-    href="users.php?type=suspend&id=<?php echo $row['id']; ?>"
-    onclick="return confirm('Are you sure you want to suspend this user for 20 days?');"
->
-
-    <i class="fa-solid fa-ban"></i>
-
-    Suspend
-
-</a>
-
-
-</div>
-
-</td>
-
-
-</tr>
-
-
-<?php
-
-}
-
-?>
-
-
-</table>
-
-</div>
-
-
-<?php
-
-}
-else{
-
-?>
-
-
-<div class="no-data">
-
-    <i class="fa-solid fa-folder-open"></i>
-
-    <br><br>
-
-    No User Found
-
-</div>
-
-
-<?php
-
-}
-
-?>
-
-
-<!-- =========================================
-     SUSPENDED USERS
-========================================= -->
-
-<div class="suspended-section">
-
-
-<div class="section-title">
-
-    <i
-        class="fa-solid fa-ban"
-        style="color:#dc3545;"
-    ></i>
-
-    Suspended Users
-
-</div>
-
-
-<?php
-
-if(mysqli_num_rows($res_suspend)>0){
-
-?>
-
-
-<div class="table-box">
-
-<table class="user-table">
-
-
-<tr>
-
-    <th>ID</th>
-
-    <th>Username</th>
-
-    <th>Email</th>
-
-    <th>Last Login</th>
-
-    <th>Status</th>
-
-    <th>Suspend Until</th>
-
-    <th>Remaining</th>
-
-    <th>Action</th>
-
-</tr>
-
-
-<?php
-
-while($row=mysqli_fetch_assoc($res_suspend)){
-
-?>
-
-
-<tr>
-
-
-<!-- ID -->
-
-<td>
-
-    <?php echo $row['id']; ?>
-
-</td>
-
-
-<!-- USERNAME -->
-
-<td>
-
-    <?php
-
-    echo htmlspecialchars(
-        $row['username']
-    );
-
-    ?>
-
-</td>
-
-
-<!-- EMAIL -->
-
-<td>
-
-    <?php
-
-    echo htmlspecialchars(
-        $row['email']
-    );
-
-    ?>
-
-</td>
-
-
-<!-- LAST LOGIN -->
-
-<td>
-
-<?php
-
-if(
-    !empty($row['last_login'])
-){
-
-    echo date(
-        'd-m-Y h:i A',
-        strtotime($row['last_login'])
-    );
-
-}
-else{
-
-    echo "Never Login";
-
-}
-
-?>
-
-</td>
-
-
-<!-- STATUS -->
-
-<td>
-
-<span class="status-suspend">
-
-    <i class="fa-solid fa-ban"></i>
-
-    Suspended
-
-</span>
-
-</td>
-
-
-<!-- SUSPEND UNTIL -->
-
-<td>
-
-<span class="suspend-date">
-
-<?php
-
-echo date(
-    'd-m-Y',
-    strtotime($row['suspend_until'])
-);
-
-?>
-
-</span>
-
-</td>
-
-
-<!-- REMAINING -->
-
-<td>
-
-<?php
-
-$today = new DateTime();
-
-$end = new DateTime(
-    $row['suspend_until']
-);
-
-if($end > $today){
-
-    $difference = $today->diff($end);
-
-?>
-
-<div class="remaining">
-
-    <?php echo $difference->days; ?> Days Left
-
-    <span class="remaining-small">
-
-        Until
-        <?php
-
-        echo date(
-            'd-m-Y',
-            strtotime($row['suspend_until'])
-        );
-
-        ?>
-
-    </span>
+    </div>
 
 </div>
 
 <?php
-
-}
-else{
-
-?>
-
-<span class="remaining">
-
-    Expired
-
-</span>
-
-<?php
-
-}
-
-?>
-
-</td>
-
-
-<!-- ACTION -->
-
-<td>
-
-<div class="action">
-
-
-<a
-    class="edit"
-    href="manage_user.php?id=<?php echo $row['id']; ?>"
->
-
-    <i class="fa-solid fa-pen-to-square"></i>
-
-    Edit
-
-</a>
-
-
-<a
-    class="active"
-    href="users.php?type=active&id=<?php echo $row['id']; ?>"
-    onclick="return confirm('Are you sure you want to activate this user?');"
->
-
-    <i class="fa-solid fa-circle-check"></i>
-
-    Activate
-
-</a>
-
-
-</div>
-
-</td>
-
-
-</tr>
-
-
-<?php
-
-}
-
-?>
-
-
-</table>
-
-</div>
-
-
-<div class="suspend-info">
-
-    <i class="fa-solid fa-circle-info"></i>
-
-    Suspended users cannot login until their
-    suspension period ends.
-
-    After 20 days, the account automatically becomes
-    <strong>Active</strong>.
-
-</div>
-
-
-<?php
-
-}
-else{
-
-?>
-
-
-<div class="no-data">
-
-    <i class="fa-solid fa-circle-check"></i>
-
-    <br><br>
-
-    No Suspended Users
-
-</div>
-
-
-<?php
-
-}
-
-?>
-
-
-</div>
-
-
-</div>
-
-
-<?php
-
 include('footer.php');
-
 ?>
-```

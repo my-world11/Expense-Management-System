@@ -1,0 +1,238 @@
+/* =========================
+   LEFT SIDEBAR
+========================= */
+
+.side-menu{
+    position:fixed;
+    top:0;
+    left:0;
+
+    width:180px;
+    height:100vh;
+
+    background:#ffffff;
+
+    border-right:1px solid #e5e7eb;
+
+    box-shadow:2px 0 10px rgba(15,23,42,.06);
+
+    padding-top:18px;
+
+    z-index:9999;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+}
+
+
+/* =========================
+   SIDEBAR TITLE
+========================= */
+
+.side-title{
+    display:flex;
+    align-items:center;
+
+    gap:8px;
+
+    height:42px;
+
+    padding:0 16px;
+
+    margin-bottom:12px;
+
+    color:#111827;
+
+    font-size:17px;
+    font-weight:700;
+
+    box-sizing:border-box;
+}
+
+.side-title i{
+    color:#2563eb;
+    font-size:16px;
+}
+
+
+/* =========================
+   MENU LINKS
+========================= */
+
+.side-menu a{
+    display:flex !important;
+    align-items:center !important;
+
+    width:calc(100% - 16px) !important;
+
+    min-height:42px;
+
+    margin:3px 8px;
+
+    padding:0 12px !important;
+
+    box-sizing:border-box;
+
+    color:#1f2937 !important;
+
+    background:#ffffff;
+
+    border-radius:7px;
+
+    font-size:13px !important;
+    font-weight:500;
+
+    text-decoration:none !important;
+
+    white-space:nowrap;
+
+    transition:all .2s ease;
+}
+
+
+/* =========================
+   MENU ICON
+========================= */
+
+.side-menu a i{
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    width:20px !important;
+
+    min-width:20px;
+
+    margin-right:8px !important;
+
+    color:#374151 !important;
+
+    font-size:14px;
+
+    transition:.2s ease;
+}
+
+
+/* =========================
+   HOVER
+========================= */
+
+.side-menu a:hover{
+    background:#eff6ff;
+
+    color:#2563eb !important;
+}
+
+.side-menu a:hover i{
+    color:#2563eb !important;
+}
+
+
+/* =========================
+   ACTIVE PAGE
+========================= */
+
+.side-menu a.active{
+    background:#2563eb !important;
+
+    color:#ffffff !important;
+
+    font-weight:600;
+
+    box-shadow:0 3px 8px rgba(37,99,235,.20);
+}
+
+.side-menu a.active i{
+    color:#ffffff !important;
+}
+
+
+/* =========================
+   PAGE CONTENT
+========================= */
+
+.container{
+    margin-left:180px;
+
+    width:calc(100% - 180px);
+
+    min-height:100vh;
+
+    padding:20px;
+
+    box-sizing:border-box;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+
+    .side-menu{
+        width:180px;
+    }
+
+    .container{
+        margin-left:180px;
+
+        width:calc(100% - 180px);
+    }
+
+}
+
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media(max-width:500px){
+
+    .side-menu{
+        width:65px;
+    }
+
+    .side-title{
+        justify-content:center;
+
+        padding:0;
+
+        font-size:0;
+    }
+
+    .side-title i{
+        font-size:18px;
+    }
+
+    .side-menu a{
+        justify-content:center;
+
+        width:calc(100% - 10px) !important;
+
+        margin:3px 5px;
+
+        padding:0 !important;
+
+        font-size:0 !important;
+    }
+
+    .side-menu a i{
+        margin:0 !important;
+
+        width:auto !important;
+
+        font-size:16px;
+    }
+
+    .container{
+        margin-left:65px;
+
+        width:calc(100% - 65px);
+
+        padding:12px;
+    }
+
+}

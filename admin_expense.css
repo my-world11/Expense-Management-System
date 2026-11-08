@@ -1,0 +1,616 @@
+
+/* =========================
+   ADMIN EXPENSE PAGE
+========================= */
+
+.admin-expense-page {
+    min-height: 100vh;
+    width: 100%;
+    background: #f5f7fb;
+    font-family: Arial, sans-serif;
+    color: #1f2937;
+}
+
+.admin-expense-page * {
+    box-sizing: border-box;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.admin-expense-main {
+    width: 100%;
+    max-width: 1250px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 30px 25px;
+}
+
+/* =========================
+   PAGE HEADING
+========================= */
+
+.admin-expense-heading {
+    width: 100%;
+    min-height: 115px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    padding: 28px 30px;
+    background: #ffffff;
+    border: 1px solid #e7ebf2;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(30, 50, 80, 0.04);
+}
+
+.admin-expense-heading h1 {
+    margin: 0;
+    color: #183b61;
+    font-size: 27px;
+    font-weight: 700;
+}
+
+.admin-expense-heading p {
+    margin: 7px 0 0;
+    color: #7b8ca1;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* =========================
+   FILTER CARD
+========================= */
+
+.expense-filter-box {
+    width: 100%;
+    margin-bottom: 22px;
+    padding: 25px;
+    background: #ffffff;
+    border: 1px solid #e7ebf2;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(30, 50, 80, 0.04);
+}
+
+.filter-heading {
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #edf1f6;
+}
+
+.filter-heading h2 {
+    margin: 0;
+    color: #183b61;
+    font-size: 19px;
+}
+
+.filter-heading p {
+    margin: 6px 0 0;
+    color: #8292a4;
+    font-size: 13px;
+}
+
+.expense-filter-box form {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.filter-field {
+    flex: 1 1 150px;
+    min-width: 140px;
+}
+
+.category-field {
+    flex: 1.2 1 170px;
+}
+
+.filter-field label {
+    display: block;
+    margin-bottom: 9px;
+    color: #52677d;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.date-input {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 45px;
+    padding: 0 12px;
+    background: #ffffff;
+    border: 1px solid #dce4ee;
+    border-radius: 8px;
+}
+
+.date-input:focus-within {
+    border-color: #1677e8;
+    box-shadow: 0 0 0 3px rgba(22, 119, 232, 0.08);
+}
+
+.date-input input {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: #52667b;
+    font-size: 13px;
+}
+
+.filter-field select {
+    width: 100%;
+    height: 45px;
+    padding: 0 12px;
+    border: 1px solid #dce4ee;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #52667b;
+    font-size: 13px;
+    outline: none;
+}
+
+.filter-field select:focus {
+    border-color: #1677e8;
+    box-shadow: 0 0 0 3px rgba(22, 119, 232, 0.08);
+}
+
+/* =========================
+   SEARCH BUTTON
+========================= */
+
+.search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 45px;
+    min-width: 100px;
+    padding: 0 20px;
+    border: 1px solid #1677e8;
+    border-radius: 8px;
+    background: #1677e8;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.search-btn:hover {
+    background: #0f68d3;
+    border-color: #0f68d3;
+}
+
+/* =========================
+   RESET BUTTON
+========================= */
+
+.reset-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 45px;
+    min-width: 100px;
+    padding: 0 20px;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    background: #f59e0b;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s ease;
+}
+
+.reset-filter-btn:hover {
+    background: #d97706;
+    border-color: #d97706;
+    color: #ffffff;
+}
+
+/* =========================
+   TOTAL EXPENSE
+========================= */
+
+.expense-total-box {
+    width: 100%;
+    min-height: 115px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 22px;
+    padding: 25px 28px;
+    background: #ffffff;
+    border: 1px solid #e7ebf2;
+    border-left: 5px solid #e53935;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(30, 50, 80, 0.04);
+}
+
+.total-info span {
+    display: block;
+    margin-bottom: 7px;
+    color: #718096;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.total-info p {
+    margin: 0;
+    color: #91a0af;
+    font-size: 12px;
+}
+
+.expense-total-box strong {
+    color: #e53935;
+    font-size: 27px;
+    font-weight: 700;
+}
+
+/* =========================
+   TABLE CARD
+========================= */
+
+.expense-table-box {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e7ebf2;
+    border-radius: 14px;
+    overflow-x: auto;
+    box-shadow: 0 4px 15px rgba(30, 50, 80, 0.04);
+}
+
+.table-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 23px 25px;
+    border-bottom: 1px solid #edf1f6;
+}
+
+.table-heading h2 {
+    margin: 0;
+    color: #183b61;
+    font-size: 20px;
+}
+
+.table-heading p {
+    margin: 6px 0 0;
+    color: #8292a4;
+    font-size: 13px;
+}
+
+.expense-table-box table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+}
+
+.expense-table-box th {
+    height: 52px;
+    padding: 14px 15px;
+    background: #f4f7fb;
+    color: #49637e;
+    text-align: left;
+    border-bottom: 1px solid #e7ebf2;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.expense-table-box td {
+    padding: 15px;
+    border-bottom: 1px solid #edf1f6;
+    color: #52677d;
+    font-size: 13px;
+    line-height: 1.5;
+    vertical-align: middle;
+}
+
+.expense-table-box tbody tr {
+    transition: background 0.2s ease;
+}
+
+.expense-table-box tbody tr:hover {
+    background: #f8fbff;
+}
+
+.expense-table-box tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.expense-table-box td small {
+    display: block;
+    margin-top: 4px;
+    color: #8998a9;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.expense-amount {
+    color: #e53935 !important;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+
+.action-buttons {
+    white-space: nowrap;
+}
+
+.view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    padding: 8px 13px;
+    margin-right: 5px;
+    border: 1px solid #cfe4ff;
+    border-radius: 6px;
+    background: #e4f0ff;
+    color: #1976d2;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.view-btn:hover {
+    background: #cfe4ff;
+}
+
+.delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 13px;
+    border: 1px solid #ffd5d5;
+    border-radius: 6px;
+    background: #fff0f0;
+    color: #e53935;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #ffe0e0;
+}
+
+/* =========================
+   EMPTY TABLE
+========================= */
+
+.no-expense {
+    height: 100px !important;
+    text-align: center !important;
+    vertical-align: middle;
+    color: #91a0af !important;
+    font-size: 14px !important;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.expense-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    padding: 20px;
+    background: rgba(7, 24, 40, 0.55);
+    z-index: 200000;
+    align-items: center;
+    justify-content: center;
+}
+
+.expense-modal.show {
+    display: flex;
+}
+
+.expense-modal-content {
+    width: 480px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: #183b61;
+    color: #ffffff;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 19px;
+}
+
+.modal-header button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.modal-header button:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.modal-body {
+    padding: 20px 24px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 14px 0;
+    border-bottom: 1px solid #edf1f5;
+    font-size: 13px;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row span {
+    flex-shrink: 0;
+    color: #7d8fa2;
+    font-weight: 600;
+}
+
+.detail-row strong {
+    color: #334e68;
+    text-align: right;
+    max-width: 65%;
+    overflow-wrap: anywhere;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+
+    .admin-expense-main {
+        padding: 20px 15px;
+    }
+
+    .admin-expense-heading {
+        min-height: auto;
+        padding: 22px;
+        margin-bottom: 20px;
+    }
+
+    .admin-expense-heading h1 {
+        font-size: 23px;
+    }
+
+    .expense-filter-box {
+        padding: 20px;
+    }
+
+    .expense-filter-box form {
+        gap: 14px;
+    }
+
+    .filter-field,
+    .category-field {
+        flex: 1 1 calc(50% - 14px);
+        min-width: 140px;
+    }
+
+    .search-btn,
+    .reset-filter-btn {
+        flex: 1 1 calc(50% - 14px);
+    }
+
+    .expense-total-box {
+        min-height: 100px;
+        padding: 20px;
+    }
+
+    .expense-total-box strong {
+        font-size: 24px;
+    }
+
+    .table-heading {
+        padding: 20px;
+    }
+
+    .expense-table-box {
+        overflow-x: auto;
+    }
+
+    .expense-table-box table {
+        min-width: 850px;
+    }
+}
+
+@media (max-width: 420px) {
+
+    .admin-expense-main {
+        padding: 15px 10px;
+    }
+
+    .admin-expense-heading {
+        padding: 18px;
+    }
+
+    .admin-expense-heading h1 {
+        font-size: 21px;
+    }
+
+    .admin-expense-heading p {
+        font-size: 13px;
+    }
+
+    .expense-filter-box {
+        padding: 16px;
+    }
+
+    .filter-heading h2 {
+        font-size: 17px;
+    }
+
+    .filter-field,
+    .category-field {
+        flex: 1 1 100%;
+    }
+
+    .search-btn,
+    .reset-filter-btn {
+        flex: 1 1 calc(50% - 7px);
+        min-width: 0;
+    }
+
+    .expense-total-box {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px;
+    }
+
+    .expense-total-box strong {
+        font-size: 23px;
+    }
+
+    .table-heading {
+        padding: 18px;
+    }
+
+    .table-heading h2 {
+        font-size: 18px;
+    }
+
+    .modal-header {
+        padding: 16px 18px;
+    }
+
+    .modal-body {
+        padding: 15px 18px;
+    }
+
+    .detail-row {
+        font-size: 12px;
+    }
+}

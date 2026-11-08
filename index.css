@@ -1,0 +1,408 @@
+/* =========================================
+   EXPENSE MANAGEMENT LOGIN
+   Clean & Balanced Layout
+   ========================================= */
+
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+}
+
+body{
+    background:#eef4fb;
+    font-family:Arial, Helvetica, sans-serif;
+    color:#172033;
+}
+
+/* =========================================
+   MAIN PAGE & CONTAINER
+   ========================================= */
+
+.login-page{
+    width:100%;
+    min-height:calc(100vh - 60px);
+    padding:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.login-container{
+    width:100%;
+    max-width:1120px;
+    min-height:600px;
+    display:flex;
+    overflow:hidden;
+    background:#ffffff;
+    border-radius:20px;
+    box-shadow:0 12px 40px rgba(18, 63, 115, 0.12);
+}
+
+/* =========================================
+   LEFT IMAGE AREA (BLUE SIDE)
+   ========================================= */
+
+.login-image{
+    width:52%;
+    padding:25px 30px; /* Reduced top/bottom padding */
+    background:#dcecff;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    position:relative;
+}
+
+/* Title & Subtitle tight gap */
+.image-title{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:8px; /* Gap reduce gariyo */
+}
+
+.brand-mark{
+    width:52px;
+    height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:#1b63b9;
+    color:#ffffff;
+    font-size:28px;
+    font-weight:bold;
+    box-shadow:0 6px 15px rgba(27, 99, 185, 0.25);
+}
+
+.image-title h1{
+    margin:0;
+    color:#133c6d;
+    font-size:32px; /* Thulo Banaiyo */
+    font-weight:bold;
+    line-height:1.1;
+}
+
+.image-title p{
+    margin:3px 0 0;
+    color:#5a789a;
+    font-size:14px; /* Slightly bigger */
+}
+
+/* Photo spacing adjusted */
+.login-image > img{
+    width:100%;
+    max-width:550px;
+    height:310px;
+    object-fit:contain;
+    display:block;
+    margin:5px auto; /* Centered with tight margins */
+}
+
+/* =========================================
+   LEFT FEATURE CARDS
+   ========================================= */
+
+.feature-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:5px;
+}
+
+.feature-card{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    border-radius:12px;
+    background:rgba(255, 255, 255, 0.85);
+    border:1px solid rgba(255, 255, 255, 0.9);
+}
+
+.feature-icon{
+    width:40px;
+    height:40px;
+    flex:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#d8f5ef;
+    color:#07977f;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.feature-card strong{
+    display:block;
+    color:#133c6d;
+    font-size:13px; /* Thulo Banaiyo */
+}
+
+.feature-card small{
+    display:block;
+    margin-top:2px;
+    color:#7187a0;
+    font-size:11px;
+}
+
+/* =========================================
+   RIGHT LOGIN AREA
+   ========================================= */
+
+.login-content{
+    width:48%;
+    padding:35px 45px; /* Compact padding */
+    background:#ffffff;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.login-heading-icon{
+    width:58px;
+    height:58px;
+    margin:0 auto 10px; /* Reduced gap */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#e8f3ff;
+    color:#1b63b9;
+    font-size:28px;
+}
+
+.login-content h2{
+    margin:0;
+    text-align:center;
+    color:#133c6d;
+    font-size:34px; /* Welcome Back thulo banaiyo */
+    font-weight:bold;
+}
+
+.login-subtitle{
+    margin:5px 0 20px; /* Reduced bottom gap */
+    text-align:center;
+    color:#7187a0;
+    font-size:14px; /* Thulo Banaiyo */
+}
+
+/* =========================================
+   FORM & INPUTS
+   ========================================= */
+
+.form-group{
+    margin-bottom:14px;
+}
+
+.form-group label{
+    display:block;
+    margin:0 0 6px 2px;
+    color:#2c3e50;
+    font-size:14px; /* Labels thulo banaiyo */
+    font-weight:bold;
+}
+
+.input-wrapper{
+    width:100%;
+    height:48px;
+    display:flex;
+    align-items:center;
+    border:1px solid #d3deea;
+    border-radius:9px;
+    background:#f8fafc;
+    transition:.2s;
+}
+
+.input-wrapper:focus-within{
+    border-color:#1b63b9;
+    background:#ffffff;
+    box-shadow:0 0 0 3px rgba(27, 99, 185, 0.12);
+}
+
+.input-icon{
+    width:43px;
+    flex:none;
+    text-align:center;
+    color:#6f849d;
+    font-size:18px;
+}
+
+.input-wrapper input{
+    width:100%;
+    height:100%;
+    padding:0 10px 0 0;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:#172033;
+    font-size:14px; /* Input text thulo banaiyo */
+}
+
+.input-wrapper input::placeholder{
+    color:#a0afc1;
+}
+
+.show-password{
+    width:42px;
+    height:100%;
+    flex:none;
+    border:0;
+    background:transparent;
+    color:#6f849d;
+    cursor:pointer;
+    font-size:18px;
+}
+
+/* =========================================
+   OPTIONS & BUTTON
+   ========================================= */
+
+.login-options{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:4px 0 16px;
+}
+
+.remember{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#64748b;
+    font-size:13px; /* Slightly bigger */
+    cursor:pointer;
+}
+
+.remember input{
+    width:15px;
+    height:15px;
+    margin:0;
+    accent-color:#1b63b9;
+}
+
+.forgot-link{
+    color:#1b63b9;
+    text-decoration:none;
+    font-size:13px; /* Slightly bigger */
+    font-weight:bold;
+}
+
+.forgot-link:hover{
+    text-decoration:underline;
+}
+
+.login-button{
+    width:100%;
+    height:50px;
+    border:0;
+    border-radius:9px;
+    background:#1b63b9;
+    color:#ffffff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-size:16px; /* Button text thulo banaiyo */
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 6px 18px rgba(27, 99, 185, 0.25);
+    transition:.2s;
+}
+
+.login-button:hover{
+    background:#154e93;
+    transform:translateY(-1px);
+}
+
+.login-button span{
+    font-size:18px;
+}
+
+/* =========================================
+   REGISTER & SECURE AREA
+   ========================================= */
+
+.register-text{
+    margin-top:14px;
+    text-align:center;
+    color:#64748b;
+    font-size:13px; /* Thulo Banaiyo */
+}
+
+.register-text a{
+    color:#1b63b9;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.register-text a:hover{
+    text-decoration:underline;
+}
+
+.secure-area{
+    margin-top:18px;
+}
+
+.secure-line{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin-bottom:10px;
+}
+
+.secure-line span{
+    height:1px;
+    flex:1;
+    background:#e3e9ef;
+}
+
+.secure-line b{
+    color:#9aa7b6;
+    font-size:10px;
+    letter-spacing:1px;
+}
+
+.secure-message{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border:1px solid #e1ecee;
+    border-radius:10px;
+    background:#f7fbfb;
+}
+
+.secure-icon{
+    width:34px;
+    height:34px;
+    flex:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:9px;
+    background:#dff7f2;
+    color:#07977f;
+    font-weight:bold;
+    font-size:16px;
+}
+
+.secure-message strong{
+    display:block;
+    color:#506277;
+    font-size:12px;
+}
+
+.secure-message small{
+    display:block;
+    margin-top:2px;
+    color:#8b99aa;
+    font-size:10px;
+}
